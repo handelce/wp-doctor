@@ -4,20 +4,24 @@ Read-only health and compromise scanner for WordPress. Point it at a site
 directory and get a ranked report of what is slow, bloated, misconfigured, or
 compromised, with a fix for every finding.
 
-> Status: pre-release. Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+> Status: early releases (0.x); options and the JSON shape may still change.
+> Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ```
-$ wp-doctor scan /var/www/example.test
+$ php wp-doctor.phar scan /var/www/example.test
+wp-doctor 0.1.0, WordPress 6.5.2
 
-CRITICAL  perf.autoload.size     Autoloaded options total 13.9 MB
-          3 options account for 12.8 MB: plugin-x_cache (5.2 MB), ...
-          Fix: wp option set-autoload plugin-x_cache no
+CRITICAL (1)
+  [config.salts.default] Authentication keys and salts are missing, sample text or repeated
+    NONCE_KEY: not defined in wp-config.php
+    Fix: Generate fresh random values at https://api.wordpress.org/secret-key/1.1/salt/ and paste all eight define() lines over the old ones in wp-config.php. Everyone is logged out once when you do.
 
-CRITICAL  sec.users.admins       20 administrator accounts created within 22 days
-          ...
+WARNING (1)
+  [config.perms.wpconfig] wp-config.php can be read or changed by other accounts on the server
+    path: wp-config.php
+    mode: 0644
+    Fix: Run `chmod 640 wp-config.php`, or `chmod 600 wp-config.php` when the web server runs as the file owner. ...
 ```
-
-(Sample output; the real format is defined during v0.1.)
 
 ## Why
 
@@ -38,12 +42,17 @@ configuration hardening. See [docs/CHECKS.md](docs/CHECKS.md) for the full list.
 
 ## Install
 
-Not yet released. Planned:
+Download the phar and its checksum from the latest release, check it, and run
+it. It needs no Composer and nothing installed on the site.
 
 ```
-curl -L -o wp-doctor.phar https://github.com/handelce/wp-doctor/releases/latest/download/wp-doctor.phar
+curl -LO https://github.com/handelce/wp-doctor/releases/latest/download/wp-doctor.phar
+curl -LO https://github.com/handelce/wp-doctor/releases/latest/download/wp-doctor.phar.sha256
+sha256sum -c wp-doctor.phar.sha256
 php wp-doctor.phar scan /path/to/site
 ```
+
+On macOS, use `shasum -a 256 -c wp-doctor.phar.sha256`.
 
 ## Platforms
 

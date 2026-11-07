@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, such as v0.1.0
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - id: tag
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if ! printf '%s' "$TAG" | grep -Eqx 'v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::$TAG is not a release tag of the form vX.Y.Z"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          path: tooling
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
+          path: source
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+          tools: composer
+      - working-directory: source
+        run: composer install --no-dev --prefer-dist --no-progress --no-interaction
+      - env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          php -d phar.readonly=0 tooling/tools/build-phar.php --source=source --output=dist/wp-doctor.phar --expect-version="${TAG#v}"
+          cd dist && sha256sum wp-doctor.phar > wp-doctor.phar.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phar
+          path: dist/
+          if-no-files-found: error
+
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php-version: ["7.2", "8.4"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs.build.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: phar
+          path: dist
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, json
+          coverage: none
+          tools: none
+      - env:
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          (cd dist && sha256sum -c wp-doctor.phar.sha256)
+          test "$(php dist/wp-doctor.phar --version)" = "wp-doctor ${TAG#v}"
+          set +e
+          php dist/wp-doctor.phar scan tests/fixtures/sites/plain --offline --format=json > report.json
+          code=$?
+          set -e
+          test "$code" = 2
+          php -r '$r = json_decode( file_get_contents( "report.json" ), true ); exit( isset( $r["tool"]["version"] ) && "" !== $r["tool"]["version"] ? 0 : 1 );'
+
+  release:
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phar
+          path: dist
+      - env:
+          TAG: ${{ needs.build.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${TAG#v}"
+          awk -v heading="## [$version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found && !/^\[[^]]+\]: / { print }
+          ' CHANGELOG.md | sed "s#](docs/#](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/docs/#g" > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::CHANGELOG.md has no section for $version"
+            exit 1
+          fi
+          gh release create "$TAG" dist/wp-doctor.phar dist/wp-doctor.phar.sha256 \
+            --verify-tag --title "wp-doctor $version" --notes-file notes.md

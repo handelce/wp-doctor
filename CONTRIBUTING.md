@@ -45,6 +45,17 @@ properties, arrow functions, `match`, `?->`, or named arguments.
 Keep them small and focused. `composer test`, `composer analyse`, and
 `composer cs` must pass.
 
+## Releasing
+
+1. Set `Application::VERSION` and add a section for the version to
+   `CHANGELOG.md`.
+2. Tag the commit `vX.Y.Z` and push the tag.
+
+The Release workflow builds `wp-doctor.phar`, runs it on PHP 7.2 and 8.4, and
+publishes the release with the phar, its SHA-256 checksum, and the changelog
+section as notes. It refuses a tag that does not match `Application::VERSION`.
+To build the phar locally, run `composer build`; it is written to `build/`.
+
 ## Reporting a vulnerability
 
 See `SECURITY.md`. Do not open a public issue for security problems.

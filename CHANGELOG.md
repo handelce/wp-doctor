@@ -24,6 +24,7 @@ First release.
 - A `wp-doctor.json` file to exclude paths, ignore checks and change
   thresholds. Unknown keys are refused.
 - Database credentials, salts and keys are removed from every report.
+- Released as a single `wp-doctor.phar`, with a SHA-256 checksum.
 - Checks, described in [docs/CHECKS.md](docs/CHECKS.md):
   - Performance and database: `perf.autoload.size`, `perf.autoload.top`,
     `perf.autoload.orphaned`, `perf.objectcache.missing`,

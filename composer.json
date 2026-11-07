@@ -50,6 +50,7 @@
 		"bin/wp-doctor"
 	],
 	"scripts": {
+		"build": "@php -d phar.readonly=0 tools/build-phar.php",
 		"lint": "find src bin tools tests -path tests/fixtures -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l && php -l bin/wp-doctor",
 		"cs": "phpcs",
 		"analyse": [
