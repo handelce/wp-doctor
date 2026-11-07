@@ -1,0 +1,5 @@
+{
+  "thresholds": { "perf.autoload.size": { "warning": 1048576, "critical": 3145728 } },
+  "ignore": ["config.xmlrpc.enabled"],
+  "exclude": ["wp-content/cache/**"]
+}

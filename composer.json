@@ -1,0 +1,73 @@
+{
+	"name": "handelce/wp-doctor",
+	"description": "Read-only health and compromise scanner for WordPress sites. One command, a ranked report, a fix for every finding.",
+	"type": "library",
+	"license": "MIT",
+	"keywords": [
+		"wordpress",
+		"security",
+		"performance",
+		"diagnostics",
+		"malware",
+		"cli"
+	],
+	"authors": [
+		{
+			"name": "Handel Emezue",
+			"homepage": "https://github.com/handelce"
+		}
+	],
+	"require": {
+		"php": ">=7.2",
+		"ext-json": "*",
+		"ext-mysqli": "*"
+	},
+	"require-dev": {
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpcompatibility/php-compatibility": "^9.3",
+		"phpstan/phpstan": "^1.11",
+		"phpunit/phpunit": "^8.5 || ^9.6",
+		"squizlabs/php_codesniffer": "^3.10",
+		"wp-coding-standards/wpcs": "^3.1"
+	},
+	"suggest": {
+		"ext-curl": "Fetches the core checksums when allow_url_fopen is disabled"
+	},
+	"autoload": {
+		"classmap": [
+			"src/"
+		],
+		"files": [
+			"src/functions.php"
+		]
+	},
+	"autoload-dev": {
+		"classmap": [
+			"tests/"
+		]
+	},
+	"bin": [
+		"bin/wp-doctor"
+	],
+	"scripts": {
+		"lint": "find src bin tools tests -path tests/fixtures -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l && php -l bin/wp-doctor",
+		"cs": "phpcs",
+		"analyse": [
+			"@composer dump-autoload",
+			"phpstan analyse --memory-limit=512M"
+		],
+		"test": [
+			"@composer dump-autoload",
+			"phpunit"
+		]
+	},
+	"config": {
+		"sort-packages": true,
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"platform": {
+			"php": "7.2.34"
+		}
+	}
+}

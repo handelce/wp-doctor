@@ -1,0 +1,13 @@
+# Left out of release archives and Composer installs, which need only
+# bin/, src/, data/, docs/ and the top-level notices.
+/.editorconfig      export-ignore
+/.gitattributes     export-ignore
+/.github/           export-ignore
+/.gitignore         export-ignore
+/composer.lock      export-ignore
+/CONTRIBUTING.md    export-ignore
+/phpcs.xml.dist     export-ignore
+/phpstan.neon.dist  export-ignore
+/phpunit.xml.dist   export-ignore
+/tests/             export-ignore
+/tools/             export-ignore

@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+      - run: composer validate --strict
+
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 7.2 parses every file with the oldest supported PHP, including files
+        # that no test loads; 8.3 also runs PHPStan.
+        php-version: ["7.2", "8.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, json
+          coverage: none
+      - run: composer install --prefer-dist --no-progress --no-interaction
+      - run: composer lint
+      - run: composer cs
+      - if: matrix.php-version == '8.3'
+        run: composer analyse
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      WPD_TEST_DB_HOST: 127.0.0.1:3306
+      WPD_TEST_DB_USER: root
+      WPD_REQUIRE_DB: "1"
+      WPD_TEST_NETWORK: ${{ matrix.php-version == '8.3' && '1' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, json
+          coverage: none
+      - name: Install the locked dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      - run: composer test
+
+  databases:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: mysql:5.7
+            php-version: "8.3"
+            health: mysqladmin ping -h 127.0.0.1 --silent
+          - database: mysql:8.0
+            php-version: "8.3"
+            health: mysqladmin ping -h 127.0.0.1 --silent
+          - database: mysql:8.0
+            php-version: "7.4"
+            health: mysqladmin ping -h 127.0.0.1 --silent
+          - database: mariadb:11
+            php-version: "8.3"
+            health: healthcheck.sh --connect --innodb_initialized
+    services:
+      database:
+        image: ${{ matrix.database }}
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+          MYSQL_ALLOW_EMPTY_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="${{ matrix.health }}"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      WPD_TEST_DB_HOST: 127.0.0.1:3306
+      WPD_TEST_DB_USER: root
+      WPD_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, json
+          coverage: none
+      - run: composer install --prefer-dist --no-progress --no-interaction
+      - run: composer test
+
+  windows:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mysqli, json, mbstring
+          coverage: none
+      - run: composer install --prefer-dist --no-progress --no-interaction
+      - run: composer test

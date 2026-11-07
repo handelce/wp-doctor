@@ -1,0 +1,37 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Entry point: builds the Application and runs it.
+ *
+ * @since 0.1.0
+ * @package WP_Doctor
+ */
+
+declare(strict_types=1);
+
+if ( PHP_VERSION_ID < 70200 ) {
+	fwrite( STDERR, "wp-doctor needs PHP 7.2 or newer.\n" );
+	exit( 3 );
+}
+
+$autoload = null;
+foreach ( array( __DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php' ) as $candidate ) {
+	if ( is_file( $candidate ) ) {
+		$autoload = $candidate;
+		break;
+	}
+}
+if ( null === $autoload ) {
+	fwrite( STDERR, "wp-doctor: run 'composer install' first.\n" );
+	exit( 3 );
+}
+
+require $autoload;
+
+$app = new WP_Doctor\Application(
+	WP_Doctor\Check\Check_Registry::built_in(),
+	new WP_Doctor\Cli\Stream_Console(),
+	getenv()
+);
+
+exit( $app->run( array_slice( $argv, 1 ) ) );

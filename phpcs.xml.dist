@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<ruleset name="wp-doctor">
+	<file>src</file>
+	<file>tests</file>
+	<file>bin/wp-doctor</file>
+	<file>tools</file>
+	<exclude-pattern>/tests/fixtures/</exclude-pattern>
+	<arg name="extensions" value="php"/>
+	<arg value="ps"/>
+
+	<config name="testVersion" value="7.2-"/>
+
+	<rule ref="WordPress-Core"/>
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs">
+		<!-- Test names state the behaviour; a docblock would repeat them. -->
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="PHPCompatibility"/>
+
+	<!-- Test class files are named exactly after their class, as the WordPress handbook asks for test classes. -->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>/tests/*_Test\.php$</exclude-pattern>
+	</rule>
+
+	<!-- Checks must read files through FileScanner; tests and maintainer tools may read directly. -->
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>/tests/</exclude-pattern>
+		<exclude-pattern>/tools/</exclude-pattern>
+	</rule>
+
+	<!-- wp_json_encode() does not exist outside WordPress. -->
+	<rule ref="WordPress.WP.AlternativeFunctions.json_encode_json_encode">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Tests search whole reports for leaked secrets and build the encodings the Redactor must catch. -->
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.urlencode_urlencode">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
+	<!-- The database driver is the one file that may call mysqli. -->
+	<rule ref="WordPress.DB.RestrictedFunctions">
+		<exclude-pattern>/src/Db/class-mysqli-driver\.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.Security.EscapeOutput">
+		<properties>
+			<property name="customEscapingFunctions" type="array">
+				<element value="esc_cli"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

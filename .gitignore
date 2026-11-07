@@ -1,0 +1,8 @@
+/vendor/
+/build/
+*.phar
+.phpunit.result.cache
+.phpunit.cache/
+.DS_Store
+.idea/
+/reports/

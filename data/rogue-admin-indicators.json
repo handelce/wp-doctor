@@ -1,0 +1,111 @@
+{
+	"about": "Login names reported on attacker-created WordPress administrator accounts, with the public report each one comes from, plus the email-domain data the sec.users.admins check uses. docs/DATA-SOURCES.md explains the fields. A strong entry is reported on its own; a soft entry is reported only with its documented email or with two supporting signals.",
+	"names": [
+		{
+			"login": "wpenginer",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Ultimate Member privilege escalation (CVE-2023-3460), 2023",
+			"source": "https://www.wordfence.com/blog/2023/06/psa-unpatched-critical-privilege-escalation-vulnerability-in-ultimate-member-plugin-being-actively-exploited/"
+		},
+		{
+			"login": "wpadmins",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Ultimate Member privilege escalation (CVE-2023-3460), 2023",
+			"source": "https://www.wordfence.com/blog/2023/06/psa-unpatched-critical-privilege-escalation-vulnerability-in-ultimate-member-plugin-being-actively-exploited/"
+		},
+		{
+			"login": "wpengine_backup",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Ultimate Member privilege escalation (CVE-2023-3460), 2023",
+			"source": "https://www.wordfence.com/blog/2023/06/psa-unpatched-critical-privilege-escalation-vulnerability-in-ultimate-member-plugin-being-actively-exploited/"
+		},
+		{
+			"login": "se_brutal",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Ultimate Member privilege escalation (CVE-2023-3460), 2023",
+			"source": "https://www.wordfence.com/blog/2023/06/psa-unpatched-critical-privilege-escalation-vulnerability-in-ultimate-member-plugin-being-actively-exploited/"
+		},
+		{
+			"login": "segs_brutal",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Ultimate Member privilege escalation (CVE-2023-3460), 2023",
+			"source": "https://www.wordfence.com/blog/2023/06/psa-unpatched-critical-privilege-escalation-vulnerability-in-ultimate-member-plugin-being-actively-exploited/"
+		},
+		{
+			"login": "100010010",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "WP-VCD malware spread through nulled themes and plugins, 2017 onward",
+			"source": "https://securityaffairs.com/65800/malware/wordpress-wp-vcd-malware.html"
+		},
+		{
+			"login": "mr_administartor",
+			"match": "exact",
+			"signal": "strong",
+			"campaign": "Malicious plugin creating a hidden administrator, 2025",
+			"source": "https://blog.sucuri.net/?p=35228"
+		},
+		{
+			"login": "xtw",
+			"match": "prefix",
+			"signal": "soft",
+			"campaign": "WP-Automatic SQL injection (CVE-2024-27956), 2024",
+			"source": "https://wpscan.com/blog/new-malware-campaign-targets-wp-automatic-plugin/"
+		},
+		{
+			"login": "wpsvc_",
+			"match": "prefix",
+			"signal": "strong",
+			"campaign": "Smart Slider 3 Pro supply-chain compromise, 2026",
+			"source": "https://smartslider.helpscoutdocs.com/article/2144-wordpress-security-advisory-smart-slider-3-pro-3-5-1-35-compromise"
+		},
+		{
+			"login": "wp_maint_",
+			"match": "prefix",
+			"signal": "strong",
+			"campaign": "Smart Slider 3 Pro supply-chain compromise, 2026",
+			"source": "https://smartslider.helpscoutdocs.com/article/2144-wordpress-security-advisory-smart-slider-3-pro-3-5-1-35-compromise"
+		},
+		{
+			"login": "adminbackup",
+			"match": "exact",
+			"signal": "soft",
+			"email": "adminbackup@wordpress.org",
+			"campaign": "Disguised compatibility plugin creating a hidden administrator, 2025",
+			"source": "https://blog.sucuri.net/2025/07/unauthorized-admin-user-created-via-disguised-wordpress-plugin.html"
+		},
+		{
+			"login": "help",
+			"match": "exact",
+			"signal": "soft",
+			"campaign": "DebugMaster Pro plugin and wp-user.php backdoor, 2025",
+			"source": "https://blog.sucuri.net/2025/09/hidden-wordpress-backdoors-creating-admin-accounts.html"
+		}
+	],
+	"allowlist": [
+		"wpengine"
+	],
+	"placeholder_domains": [
+		"example.com",
+		"example.net",
+		"example.org",
+		"localhost",
+		"localhost.localdomain"
+	],
+	"placeholder_tlds": [
+		"example",
+		"invalid",
+		"local",
+		"localdomain",
+		"localhost",
+		"test"
+	],
+	"mail_providers": [
+		"21cn.com"
+	]
+}
