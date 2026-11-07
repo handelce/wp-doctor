@@ -14,6 +14,7 @@ use WP_Doctor\Site\Config;
 use WP_Doctor\Site\Config_Parser;
 use WP_Doctor\Site\Site_Locator;
 use WP_Doctor\Site\Site_Not_Found_Exception;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Site_Locator_Test extends TestCase {
@@ -222,9 +223,7 @@ final class Site_Locator_Test extends TestCase {
 	}
 
 	public function test_a_config_the_scanning_account_cannot_read_is_located_with_a_reason(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$tree = new Temp_Tree();
 		try {
 			$tree->file( 'wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );

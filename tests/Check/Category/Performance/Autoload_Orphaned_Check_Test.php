@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Performance\Autoload_Orphaned_Check;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Recording_Driver;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
@@ -200,9 +201,7 @@ final class Autoload_Orphaned_Check_Test extends TestCase {
 	}
 
 	public function test_a_plugins_directory_that_could_not_be_listed_fully_is_skipped(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$driver       = new Recording_Driver();
 		$driver->rows = array(
 			array(

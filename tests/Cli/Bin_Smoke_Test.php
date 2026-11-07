@@ -54,7 +54,9 @@ final class Bin_Smoke_Test extends TestCase {
 	public function test_the_script_is_executable_and_starts_with_a_php_shebang(): void {
 		$path = dirname( __DIR__, 2 ) . '/bin/wp-doctor';
 
-		$this->assertTrue( is_executable( $path ) );
+		if ( 'Windows' !== PHP_OS_FAMILY ) {
+			$this->assertTrue( is_executable( $path ), 'Windows has no executable bit; everywhere else bin/wp-doctor needs it' );
+		}
 		$this->assertSame( '#!/usr/bin/env php', (string) strtok( (string) file_get_contents( $path ), "\n" ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
 }

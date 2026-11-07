@@ -20,6 +20,7 @@ use WP_Doctor\Check\Check;
 use WP_Doctor\Fs\File_Scanner;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Excluded_Walk_Test extends TestCase {
@@ -49,6 +50,9 @@ final class Excluded_Walk_Test extends TestCase {
 	 * @param Check $check Check that walks the site.
 	 */
 	public function test_a_check_whose_whole_walk_is_excluded_skips( Check $check ): void {
+		if ( $check instanceof Writable_Files_Check ) {
+			File_Modes::require_unix_modes();
+		}
 		$context = Context_Factory::for_tree( $this->tree, '', File_Scanner::DEFAULT_MAX_FILES, array( '**' ) );
 		$this->assertNotEmpty( iterator_to_array( ( new File_Scanner( $this->tree->site() ) )->walk(), false ) );
 

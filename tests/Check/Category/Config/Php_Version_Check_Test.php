@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Config\Php_Version_Check;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Php_Version_Check_Test extends TestCase {
@@ -257,9 +258,7 @@ final class Php_Version_Check_Test extends TestCase {
 	}
 
 	public function test_a_hinted_version_in_support_is_skipped_when_a_plugin_folder_could_not_be_read(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$tree = new Temp_Tree();
 		try {
 			$tree->file( '.htaccess', 'AddHandler application/x-httpd-ea-php84 .php' );

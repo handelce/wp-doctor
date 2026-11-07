@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Recording_Driver;
 use WP_Doctor\Tests\Support\Temp_Tree;
 use WP_Doctor\Util\Malformed_Serialization_Exception;
@@ -187,9 +188,7 @@ final class Inactive_Plugins_Check_Test extends TestCase {
 	}
 
 	public function test_a_plugins_directory_that_could_not_be_listed_is_skipped_rather_than_passed(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'wp-content/plugins/akismet/akismet.php' );
 		$this->tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
 		chmod( $this->tree->site() . '/wp-content/plugins', 0000 );

@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Config\Writable_Files_Check;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Writable_Files_Check_Test extends TestCase {
@@ -68,6 +69,7 @@ final class Writable_Files_Check_Test extends TestCase {
 	}
 
 	public function test_files_and_directories_with_ordinary_modes_pass(): void {
+		File_Modes::require_unix_modes();
 		$this->tree->file( 'index.php' );
 		$this->tree->file( 'wp-content/uploads/a.jpg' );
 		$this->tree->normalise_permissions();
@@ -77,6 +79,7 @@ final class Writable_Files_Check_Test extends TestCase {
 	}
 
 	public function test_a_symbolic_link_is_not_judged_by_its_own_mode(): void {
+		File_Modes::require_unix_modes();
 		$this->tree->file( 'real.txt' );
 		$this->tree->link( 'alias.txt', $this->tree->site() . '/real.txt' );
 		$this->tree->normalise_permissions();
@@ -89,6 +92,7 @@ final class Writable_Files_Check_Test extends TestCase {
 	}
 
 	public function test_world_writable_files_and_directories_are_counted_and_listed(): void {
+		File_Modes::require_unix_modes();
 		$this->tree->file( 'wp-content/cache/page.html' );
 		$this->tree->file( 'config.php' );
 		$this->tree->file( 'fine.php' );
@@ -108,6 +112,7 @@ final class Writable_Files_Check_Test extends TestCase {
 	}
 
 	public function test_a_group_writable_file_is_not_world_writable(): void {
+		File_Modes::require_unix_modes();
 		$this->tree->file( 'a.php' );
 		$this->tree->normalise_permissions();
 		chmod( $this->tree->site() . '/a.php', 0664 );
@@ -127,6 +132,7 @@ final class Writable_Files_Check_Test extends TestCase {
 	}
 
 	public function test_a_clean_result_is_a_skip_after_an_earlier_check_already_stopped_at_the_cap(): void {
+		File_Modes::require_unix_modes();
 		$this->tree->file( 'a.txt' );
 		$this->tree->file( 'b.txt' );
 		$this->tree->file( 'c.txt' );

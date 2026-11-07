@@ -9,6 +9,10 @@ declare(strict_types=1);
 
 namespace WP_Doctor\Tests\Support;
 
+use PHPUnit\Framework\SkippedTestError;
+
+use function WP_Doctor\esc_cli;
+
 final class Temp_Tree {
 
 	/**
@@ -68,12 +72,6 @@ final class Temp_Tree {
 	}
 
 	/**
-	 * Creates a symlink under the site.
-	 *
-	 * @param string $relative Link path relative to the site root.
-	 * @param string $target   Absolute link target.
-	 */
-	/**
 	 * Creates a sparse file of the given size.
 	 *
 	 * @param string $relative Path relative to the site root.
@@ -115,12 +113,38 @@ final class Temp_Tree {
 		}
 	}
 
+	/**
+	 * Creates a symlink under the site.
+	 *
+	 * @param string $relative Link path relative to the site root.
+	 * @param string $target   Absolute link target.
+	 */
 	public function link( string $relative, string $target ): void {
 		$path = $this->site() . '/' . $relative;
 		if ( ! is_dir( dirname( $path ) ) ) {
 			mkdir( dirname( $path ), 0777, true );
 		}
-		symlink( $target, $path );
+		self::symlink( $target, $path );
+	}
+
+	/**
+	 * Creates a symlink, or skips the running test on Windows when the link
+	 * cannot be made there: Windows needs the right to create links, and a
+	 * target that exists.
+	 *
+	 * @param string $target Link target.
+	 * @param string $path   Absolute link path.
+	 * @throws SkippedTestError On Windows, when the link is refused.
+	 * @throws \RuntimeException Elsewhere, when the link is refused.
+	 */
+	public static function symlink( string $target, string $path ): void {
+		if ( @symlink( $target, $path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A refused link is reported by the exception below.
+			return;
+		}
+		if ( 'Windows' === PHP_OS_FAMILY ) {
+			throw new SkippedTestError( esc_cli( "Windows refused to create the symlink $path." ) );
+		}
+		throw new \RuntimeException( esc_cli( "Could not create the symlink $path" ) );
 	}
 
 	/**
@@ -145,6 +169,10 @@ final class Temp_Tree {
 	 * @param string $path Absolute path.
 	 */
 	private function delete( string $path ): void {
+		if ( is_link( $path ) && is_dir( $path ) && 'Windows' === PHP_OS_FAMILY ) {
+			rmdir( $path );
+			return;
+		}
 		if ( is_link( $path ) || is_file( $path ) ) {
 			unlink( $path );
 			return;

@@ -20,6 +20,7 @@ use WP_Doctor\Report\Result;
 use WP_Doctor\Report\Severity;
 use WP_Doctor\Tests\Support\Buffer_Console;
 use WP_Doctor\Tests\Support\Fake_Checksum_Source;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Recording_Driver;
 use WP_Doctor\Tests\Support\Stub_Check;
 use WP_Doctor\Tests\Support\Temp_Tree;
@@ -929,9 +930,7 @@ final class Application_Test extends TestCase {
 	}
 
 	public function test_an_unreadable_wp_config_gives_a_partial_scan_rather_than_stopping(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree = new Temp_Tree();
 		$this->tree->file( 'wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
 		$config = $this->tree->file( 'wp-config.php', "<?php\ndefine( 'DB_PASSWORD', 'example-password' );\n\$table_prefix = 'wp_';\n" );
