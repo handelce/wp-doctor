@@ -262,11 +262,27 @@ then in its parent, as WordPress does; the content directory defaults to
 also look at the top of the web root, which serves files too. Every evidence path
 stays relative to the scanned root, such as `wp/wp-includes/functions.php`.
 
+## Reading PHP code
+
+`sec.code.obfuscated` and `sec.code.remotefetch` judge PHP source without
+running it. `Php_Sources` walks the PHP files and passes on only those whose
+text holds the words a check needs, such as `eval`, so most files are never
+tokenized. `Php_Tokens` splits a file with `token_get_all()`, dropping
+whitespace and comments, so code in a comment or a string is never mistaken
+for a call. `Code_Sinks` then finds each `eval()`, `assert()`,
+`create_function()`, `include` and `require`, and records what feeds its
+argument: a decoder, a long encoded string, or a fetch from another server. A
+variable is followed to its assignments in the same file, but only through
+calls that return their argument changed (decoders, fetchers, string
+functions); `is_array( $x )` or a method call stops it. Files are read whole
+up to the scanner's 4 MiB cap, and a file larger than that is reported as read
+in part.
+
 ## Walking the filesystem safely
 
 - Skips symlinks that leave the site root.
 - Caps files visited (`--max-files`, default 200000) and bytes read per file
-  (default 512 KB for content checks). Hitting a cap adds a notice to the report.
+  (default 4 MiB for content checks). Hitting a cap adds a notice to the report.
 - Honours `--exclude` globs from config. An excluded directory excludes
   everything under it, for `stat` and `read` as well as for walks.
 - `File_Scanner::walk()` returns a `Walk`, which yields one entry at a time;

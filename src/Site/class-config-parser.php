@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace WP_Doctor\Site;
 
+use WP_Doctor\Util\Php_Tokens;
+
 /**
  * Reads define() and const literals, $table_prefix and literal ini_set() calls
  * from source text. The source is tokenized, never included or evaluated.
@@ -198,44 +200,15 @@ final class Config_Parser {
 	}
 
 	/**
-	 * Splits source into [id, text] pairs without whitespace and comments.
-	 * Punctuation gets id 0. A fully qualified name such as `\define` becomes
-	 * one T_STRING on every PHP version.
+	 * Splits source into [id, text, line] triples without whitespace and comments.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param string $source PHP source.
-	 * @return array<int, array{0: int, 1: string}>
+	 * @return array<int, array{0: int, 1: string, 2: int}>
 	 */
 	private function tokenize( string $source ): array {
-		$tokens        = array();
-		$qualified_ids = defined( 'T_NAME_FULLY_QUALIFIED' ) ? array( constant( 'T_NAME_FULLY_QUALIFIED' ) ) : array();
-		$raw           = token_get_all( $source );
-
-		for ( $i = 0, $total = count( $raw ); $i < $total; $i++ ) {
-			$token = $raw[ $i ];
-			if ( ! is_array( $token ) ) {
-				$tokens[] = array( 0, $token );
-				continue;
-			}
-
-			list( $id, $text ) = $token;
-			if ( T_WHITESPACE === $id || T_COMMENT === $id || T_DOC_COMMENT === $id ) {
-				continue;
-			}
-			if ( in_array( $id, $qualified_ids, true ) ) {
-				$tokens[] = array( T_STRING, $text );
-				continue;
-			}
-			if ( T_NS_SEPARATOR === $id && isset( $raw[ $i + 1 ] ) && is_array( $raw[ $i + 1 ] ) && T_STRING === $raw[ $i + 1 ][0] ) {
-				$tokens[] = array( T_STRING, '\\' . $raw[ $i + 1 ][1] );
-				++$i;
-				continue;
-			}
-			$tokens[] = array( $id, $text );
-		}
-
-		return $tokens;
+		return Php_Tokens::significant( $source );
 	}
 
 	/**

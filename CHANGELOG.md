@@ -14,6 +14,16 @@ minor release may change the command-line options or the JSON report shape.
   root as the path. `wp-config.php` is read from the core directory or the
   web root, and the content directory, `UPLOADS` and `upload_path` are found
   as WordPress finds them.
+- `sec.code.obfuscated` (warning): PHP that runs decoded or encoded data with
+  `eval()`, `assert()` or `create_function()`, a common form of injected
+  code. It reads every PHP file in the site and `wp-config.php`.
+- `sec.code.remotefetch` (critical): PHP that downloads code from another
+  server and runs it, including an `include` of a URL.
+
+### Changed
+
+- Files are read up to 4 MiB instead of 512 KiB, so large plugin files are
+  examined in full.
 
 ## [0.1.1] - 2026-11-08
 

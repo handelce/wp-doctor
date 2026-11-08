@@ -25,7 +25,7 @@ use function WP_Doctor\real_path;
 final class File_Scanner {
 
 	public const DEFAULT_MAX_FILES = 200000;
-	public const DEFAULT_MAX_BYTES = 524288;
+	public const DEFAULT_MAX_BYTES = 4194304;
 
 	/**
 	 * Largest full walk kept in memory for later walks to replay.

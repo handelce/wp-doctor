@@ -34,7 +34,9 @@ use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
 use WP_Doctor\Check\Category\Security\Admin_Users_Check;
 use WP_Doctor\Check\Category\Security\Core_Checksums_Check;
 use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
+use WP_Doctor\Check\Category\Security\Obfuscated_Code_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
+use WP_Doctor\Check\Category\Security\Remote_Code_Check;
 use WP_Doctor\Check\Category\Security\Uploads_Disguised_Check;
 use WP_Doctor\Check\Category\Security\Uploads_Php_Check;
 
@@ -101,10 +103,12 @@ final class Check_Registry {
 			new Inactive_Plugins_Check(),
 			new Leftover_Files_Check(),
 			new Multisite_Scope_Check(),
+			new Obfuscated_Code_Check(),
 			new Object_Cache_Missing_Check(),
 			new Outdated_Updates_Check(),
 			new Php_Settings_Check(),
 			new Php_Version_Check(),
+			new Remote_Code_Check(),
 			new Tables_Bloat_Check(),
 			new Tables_Largest_Check(),
 			new Transients_Expired_Check(),

@@ -23,7 +23,7 @@ final class Checks_Catalogue_Test extends TestCase {
 		$text = (string) file_get_contents( dirname( __DIR__ ) . '/docs/CHECKS.md' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$rows = array();
 		foreach ( explode( "\n", $text ) as $line ) {
-			if ( 1 === preg_match( '/^\| `([a-z]+(?:\.[a-z]+){2})` \|.*\| ([0-9.]+|later) \|\s*$/', $line, $match ) ) {
+			if ( 1 === preg_match( '/^\| `([a-z]+(?:\.[a-z]+){2})` \|.*\| ([0-9.]+(?: \(planned\))?|later) \|\s*$/', $line, $match ) ) {
 				$rows[ $match[1] ] = $match[2];
 			}
 		}
@@ -46,18 +46,18 @@ final class Checks_Catalogue_Test extends TestCase {
 		return $ids;
 	}
 
-	public function test_every_check_marked_0_1_in_the_catalogue_is_registered_and_the_other_way_round(): void {
+	public function test_every_built_check_in_the_catalogue_is_registered_and_the_other_way_round(): void {
 		$documented = array_keys(
 			array_filter(
 				$this->documented(),
 				static function ( string $version ): bool {
-					return '0.1' === $version;
+					return 1 === preg_match( '/^[0-9.]+$/', $version );
 				}
 			)
 		);
 		sort( $documented );
 
-		$this->assertNotEmpty( $documented, 'No 0.1 rows were found in docs/CHECKS.md' );
+		$this->assertGreaterThan( 25, count( $documented ), 'Too few built rows were found in docs/CHECKS.md' );
 		$this->assertSame( $documented, $this->registered() );
 	}
 
