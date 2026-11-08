@@ -45,7 +45,7 @@ use WP_Doctor\Site\Site_Not_Found_Exception;
  */
 final class Application {
 
-	public const VERSION = '0.1.1';
+	public const VERSION = '0.2.0';
 
 	private const MAX_CONFIG_BYTES = 65536;
 	private const ENV_TABLE_PREFIX = 'WPD_DB_TABLE_PREFIX';
