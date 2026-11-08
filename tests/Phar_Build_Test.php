@@ -18,6 +18,7 @@ use function WP_Doctor\esc_cli;
 final class Phar_Build_Test extends TestCase {
 
 	private const TIMEOUT_SECONDS = 120;
+	private const EPOCH           = 1767225600;
 
 	/**
 	 * Directory holding the phar built for this class.
@@ -47,7 +48,7 @@ final class Phar_Build_Test extends TestCase {
 		self::$directory = sys_get_temp_dir() . '/wpd-phar-' . bin2hex( random_bytes( 6 ) );
 		mkdir( self::$directory );
 		self::$phar         = self::$directory . '/wp-doctor.phar';
-		$build              = self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . self::$phar ) );
+		$build              = self::build( self::$phar );
 		self::$build_output = "exit {$build['exit']}: {$build['stdout']}{$build['stderr']}";
 	}
 
@@ -124,6 +125,36 @@ final class Phar_Build_Test extends TestCase {
 		$this->assertSame( $expected, $entries );
 	}
 
+	public function test_two_builds_of_the_same_source_are_byte_identical(): void {
+		$again = self::$directory . '/again.phar';
+		sleep( 1 );
+		$build = self::build( $again );
+
+		$this->assertSame( 0, $build['exit'], $build['stderr'] );
+		$this->assertSame( hash_file( 'sha256', self::$phar ), hash_file( 'sha256', $again ) );
+	}
+
+	public function test_every_file_in_the_phar_has_the_build_time_and_the_same_permissions(): void {
+		$times = array();
+		$perms = array();
+		foreach ( new \RecursiveIteratorIterator( new \Phar( self::$phar ) ) as $file ) {
+			$times[ $file->getMTime() ]        = true;
+			$perms[ $file->getPerms() & 0777 ] = true;
+		}
+
+		$this->assertSame( array( self::EPOCH ), array_keys( $times ) );
+		$this->assertCount( 1, $perms, 'Files in the phar have different permissions' );
+	}
+
+	public function test_a_source_date_epoch_that_is_not_a_unix_time_is_refused(): void {
+		$output = self::$directory . '/dated.phar';
+		$result = self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . $output ), array( 'SOURCE_DATE_EPOCH' => '2026-11-08' ) );
+
+		$this->assertSame( 1, $result['exit'] );
+		$this->assertStringContainsString( 'SOURCE_DATE_EPOCH', $result['stderr'] );
+		$this->assertFalse( file_exists( $output ), "A refused build left $output behind" );
+	}
+
 	public function test_a_build_for_another_version_is_refused(): void {
 		$output = self::$directory . '/other.phar';
 		$result = self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . $output, '--expect-version=9.9.9' ) );
@@ -143,6 +174,16 @@ final class Phar_Build_Test extends TestCase {
 		$this->assertFalse( file_exists( $output ), "A refused build left $output behind" );
 	}
 
+	/**
+	 * Builds a phar from this checkout, dated EPOCH.
+	 *
+	 * @param string $output Path of the phar to write.
+	 * @return array{exit: int, stdout: string, stderr: string}
+	 */
+	private static function build( string $output ): array {
+		return self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . $output ), array( 'SOURCE_DATE_EPOCH' => (string) self::EPOCH ) );
+	}
+
 	private static function build_script(): string {
 		return dirname( __DIR__ ) . '/tools/build-phar.php';
 	}
@@ -151,11 +192,12 @@ final class Phar_Build_Test extends TestCase {
 	 * Runs PHP with the given arguments, without Xdebug. Output goes to files,
 	 * since a pipe left unread can block the child on Windows.
 	 *
-	 * @param array<int, string> $args Arguments after the PHP binary.
+	 * @param array<int, string>    $args Arguments after the PHP binary.
+	 * @param array<string, string> $env  Variables to set on top of this process's environment.
 	 * @return array{exit: int, stdout: string, stderr: string}
 	 * @throws \RuntimeException When PHP cannot start or runs past the time limit.
 	 */
-	private static function run_php( array $args ): array {
+	private static function run_php( array $args, array $env = array() ): array {
 		$command = escapeshellarg( PHP_BINARY ) . ' -d xdebug.mode=off';
 		foreach ( $args as $arg ) {
 			$command .= ' ' . escapeshellarg( $arg );
@@ -171,7 +213,7 @@ final class Phar_Build_Test extends TestCase {
 			),
 			$pipes,
 			null,
-			null,
+			array() === $env ? null : array_merge( getenv(), $env ),
 			array( 'bypass_shell' => true )
 		);
 		if ( ! is_resource( $process ) ) {

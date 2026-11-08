@@ -44,6 +44,8 @@ jobs:
           php-version: "8.3"
           coverage: none
           tools: composer
+      - working-directory: tooling
+        run: composer install --prefer-dist --no-progress --no-interaction
       - working-directory: source
         run: composer install --no-dev --prefer-dist --no-progress --no-interaction
       - env:
@@ -91,8 +93,41 @@ jobs:
           test "$code" = 2
           php -r '$r = json_decode( file_get_contents( "report.json" ), true ); exit( isset( $r["tool"]["version"] ) && "" !== $r["tool"]["version"] ? 0 : 1 );'
 
+  reproduce:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: tooling
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ needs.build.outputs.tag }}
+          path: source
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+          tools: composer
+      - working-directory: tooling
+        run: composer install --prefer-dist --no-progress --no-interaction
+      - working-directory: source
+        run: composer install --no-dev --prefer-dist --no-progress --no-interaction
+      - uses: actions/download-artifact@v8
+        with:
+          name: phar
+          path: dist
+      - run: |
+          php -d phar.readonly=0 tooling/tools/build-phar.php --source=source --output=rebuilt/wp-doctor.phar
+          if ! cmp dist/wp-doctor.phar rebuilt/wp-doctor.phar; then
+            echo "::error::A second build of the tag on PHP 8.4 differs from the first; the phar is not reproducible"
+            sha256sum dist/wp-doctor.phar rebuilt/wp-doctor.phar
+            exit 1
+          fi
+
   release:
-    needs: [build, smoke]
+    needs: [build, smoke, reproduce]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

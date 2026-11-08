@@ -9,6 +9,11 @@
  * has run (default: this repository). --output defaults to build/wp-doctor.phar.
  * --expect-version refuses the build unless Application::VERSION matches.
  *
+ * The build is reproducible: every file in the phar gets the time in
+ * SOURCE_DATE_EPOCH, or else the time of the source's last commit, and the
+ * same permissions, so the same source gives the same bytes. Setting the times
+ * needs seld/phar-utils from this repository's development install.
+ *
  * This is a maintainer tool for the repository. It never runs during a scan
  * and never touches a scanned site. The phar gets its own class map
  * autoloader for src/, so no Composer files or development packages go in.
@@ -84,6 +89,32 @@ function wpd_build_version( string $source ): string {
 	}
 
 	return $match[1];
+}
+
+/**
+ * The time every file in the phar is given: SOURCE_DATE_EPOCH when it is set,
+ * else the commit time of the source's HEAD.
+ *
+ * @since 0.3.0
+ *
+ * @param string $source Checkout root.
+ * @return int Unix time.
+ */
+function wpd_build_epoch( string $source ): int {
+	$epoch = getenv( 'SOURCE_DATE_EPOCH' );
+	if ( false !== $epoch && '' !== $epoch ) {
+		if ( 1 !== preg_match( '/^\d{1,10}$/', $epoch ) ) {
+			wpd_build_fail( "SOURCE_DATE_EPOCH must be a Unix time in seconds, not $epoch" );
+		}
+
+		return (int) $epoch;
+	}
+	$commit = trim( (string) shell_exec( 'git -C ' . escapeshellarg( $source ) . ' log -1 --format=%ct 2>' . ( '\\' === DIRECTORY_SEPARATOR ? 'NUL' : '/dev/null' ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec -- A maintainer tool asking git for the commit time; it never runs during a scan.
+	if ( 1 !== preg_match( '/^\d+$/', $commit ) ) {
+		wpd_build_fail( "$source has no git history to date the build; set SOURCE_DATE_EPOCH" );
+	}
+
+	return (int) $commit;
 }
 
 /**
@@ -178,6 +209,15 @@ if ( '' !== $options['expect-version'] && $options['expect-version'] !== $versio
 	wpd_build_fail( "expected version {$options['expect-version']}, but src/class-application.php says $version" );
 }
 $class_map = wpd_build_class_map( $source );
+$epoch     = wpd_build_epoch( $source );
+$tooling   = dirname( __DIR__ ) . '/vendor/autoload.php';
+if ( ! is_file( $tooling ) ) {
+	wpd_build_fail( 'seld/phar-utils is needed to set the file times; run composer install in ' . dirname( __DIR__ ) );
+}
+require $tooling;
+if ( ! class_exists( 'Seld\\PharUtils\\Timestamps' ) ) {
+	wpd_build_fail( 'seld/phar-utils is not installed; run composer install in ' . dirname( __DIR__ ) );
+}
 
 $output = $options['output'];
 if ( ! is_dir( dirname( $output ) ) && ! mkdir( dirname( $output ), 0755, true ) ) {
@@ -191,16 +231,25 @@ if ( is_file( $partial ) ) {
 try {
 	$phar = new Phar( $partial );
 	$phar->startBuffering();
+	$contents = array();
 	foreach ( array_merge( wpd_build_files( $source, 'src' ), wpd_build_files( $source, 'data' ), array( 'LICENSE' ) ) as $file ) {
-		$phar->addFile( "$source/$file", $file );
+		$contents[ $file ] = (string) file_get_contents( "$source/$file" );
 	}
-	$entry = (string) file_get_contents( "$source/bin/wp-doctor" );
-	$phar->addFromString( 'bin/wp-doctor', (string) preg_replace( '/\A#![^\n]*\n/', '', $entry ) );
-	$phar->addFromString( 'vendor/autoload.php', wpd_build_autoloader( $class_map ) );
+	$contents['bin/wp-doctor']       = (string) preg_replace( '/\A#![^\n]*\n/', '', (string) file_get_contents( "$source/bin/wp-doctor" ) );
+	$contents['vendor/autoload.php'] = wpd_build_autoloader( $class_map );
+	foreach ( $contents as $file => $content ) {
+		$phar->addFromString( $file, $content );
+		$phar[ $file ]->chmod( 0644 );
+	}
 	$phar->setStub( "#!/usr/bin/env php\n<?php\nPhar::mapPhar( 'wp-doctor.phar' );\nrequire 'phar://wp-doctor.phar/bin/wp-doctor';\n__HALT_COMPILER();\n" );
 	$phar->setSignatureAlgorithm( Phar::SHA256 );
 	$phar->stopBuffering();
 	unset( $phar );
+	$times = new Seld\PharUtils\Timestamps( $partial );
+	$times->updateTimestamps( $epoch );
+	if ( ! $times->save( $partial, Phar::SHA256 ) ) {
+		throw new RuntimeException( "could not save $partial with the file times set" );
+	}
 } catch ( Exception $e ) {
 	if ( is_file( $partial ) ) {
 		unlink( $partial );
@@ -213,4 +262,4 @@ if ( ! rename( $partial, $output ) ) {
 	unlink( $partial );
 	wpd_build_fail( "could not move the phar to $output" );
 }
-fwrite( STDOUT, "Built $output (wp-doctor $version, " . count( $class_map ) . ' classes, ' . filesize( $output ) . " bytes)\n" );
+fwrite( STDOUT, "Built $output (wp-doctor $version, " . count( $class_map ) . ' classes, ' . filesize( $output ) . ' bytes, files dated ' . gmdate( 'Y-m-d H:i:s', $epoch ) . " UTC)\n" );
