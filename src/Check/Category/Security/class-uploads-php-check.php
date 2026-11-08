@@ -33,7 +33,7 @@ use WP_Doctor\Report\Severity;
 final class Uploads_Php_Check implements Check {
 
 	private const EXTENSIONS          = array( 'php', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'phtml', 'pht', 'phps', 'phar' );
-	private const STUB                = '/\A(?:\xEF\xBB\xBF)?<\?php\s*(?:(?:\/\/|\/\*)\s*Silence is golden\.?\s*(?:\*\/)?\s*)?(?:\?>)?\s*\z/i';
+	private const STUB                = Code_Directory::INDEX_STUB;
 	private const SERVER_CONFIG_NAMES = array( '.htaccess', '.user.ini', 'php.ini' );
 	private const CONFIG_READ_BYTES   = 65536;
 

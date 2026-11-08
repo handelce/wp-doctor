@@ -19,6 +19,10 @@ minor release may change the command-line options or the JSON report shape.
   code. It reads every PHP file in the site and `wp-config.php`.
 - `sec.code.remotefetch` (critical): PHP that downloads code from another
   server and runs it, including an `include` of a URL.
+- `sec.plugins.unknown` and `sec.themes.unknown` (warning): PHP in the plugins
+  or themes directory that WordPress would not load as a plugin or theme, such
+  as a folder with no plugin header or no `style.css`, or a stray PHP file at
+  the top. Such code can still be requested over the web.
 
 ### Changed
 

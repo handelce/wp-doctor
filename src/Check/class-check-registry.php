@@ -37,6 +37,8 @@ use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
 use WP_Doctor\Check\Category\Security\Obfuscated_Code_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
 use WP_Doctor\Check\Category\Security\Remote_Code_Check;
+use WP_Doctor\Check\Category\Security\Unknown_Plugins_Check;
+use WP_Doctor\Check\Category\Security\Unknown_Themes_Check;
 use WP_Doctor\Check\Category\Security\Uploads_Disguised_Check;
 use WP_Doctor\Check\Category\Security\Uploads_Php_Check;
 
@@ -112,6 +114,8 @@ final class Check_Registry {
 			new Tables_Bloat_Check(),
 			new Tables_Largest_Check(),
 			new Transients_Expired_Check(),
+			new Unknown_Plugins_Check(),
+			new Unknown_Themes_Check(),
 			new Uploads_Disguised_Check(),
 			new Uploads_Php_Check(),
 			new Writable_Files_Check()
