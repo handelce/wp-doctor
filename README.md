@@ -57,6 +57,17 @@ core is in a subdirectory of it (an `index.php` that loads `wp/wp-blog-header.ph
 
 On macOS, use `shasum -a 256 -c wp-doctor.phar.sha256`.
 
+The build is reproducible, so you can also check the phar against the source:
+build the release tag yourself and compare the checksum. Use PHP 7.2 or later
+with the phar extension.
+
+```
+git clone --branch vX.Y.Z https://github.com/handelce/wp-doctor.git && cd wp-doctor
+composer install
+composer build
+sha256sum build/wp-doctor.phar
+```
+
 ## Platforms
 
 Linux, macOS and Windows. Continuous integration runs the tests on Linux

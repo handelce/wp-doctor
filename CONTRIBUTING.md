@@ -77,10 +77,13 @@ Keep them small and focused. `composer test`, `composer analyse`, and
    `CHANGELOG.md` into a dated section for the version.
 2. Once CI passes on that commit, tag it `vX.Y.Z` and push the tag.
 
-The Release workflow builds `wp-doctor.phar`, runs it on PHP 7.2 and 8.4, and
-publishes the release with the phar, its SHA-256 checksum, and the changelog
-section as notes. It refuses a tag that does not match `Application::VERSION`.
+The Release workflow builds `wp-doctor.phar`, runs it on PHP 7.2 and 8.4,
+builds it again on another PHP version and refuses to go on unless the two
+are identical, and publishes the release with the phar, its SHA-256 checksum,
+and the changelog section as notes. It refuses a tag that does not match `Application::VERSION`.
 To build the phar locally, run `composer build`; it is written to `build/`.
+Every file in it is dated with the last commit, or with `SOURCE_DATE_EPOCH`
+when that is set, so the same source gives the same bytes.
 
 ## Reporting a vulnerability
 
