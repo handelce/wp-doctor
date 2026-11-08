@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace WP_Doctor\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
+use WP_Doctor\Check\Category\Config\Db_Version_Check;
 use WP_Doctor\Check\Category\Performance\Cron_Overdue_Check;
+use WP_Doctor\Check\Category\Performance\Revisions_Count_Check;
+use WP_Doctor\Check\Category\Performance\Tables_Engine_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
 use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
 use WP_Doctor\Check\Category\Security\Admin_Users_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
 use WP_Doctor\Check\Check;
 use WP_Doctor\Check\Context;
+use WP_Doctor\Check\Thresholds;
 use WP_Doctor\Db\Read_Only_Connection;
 use WP_Doctor\Fs\File_Scanner;
 use WP_Doctor\Report\Result;
@@ -29,15 +33,19 @@ final class Database_Checks_Integration_Test extends TestCase {
 	/**
 	 * Runs a check against a database loaded from a seed file.
 	 *
-	 * @param Check  $check Check to run.
-	 * @param string $seed  File name under tests/fixtures/sql.
+	 * @param Check           $check      Check to run.
+	 * @param string          $seed       File name under tests/fixtures/sql.
+	 * @param Thresholds|null $thresholds Limits to use instead of the defaults.
 	 * @return Result
 	 */
-	private function run_against( Check $check, string $seed ): Result {
+	private function run_against( Check $check, string $seed, ?Thresholds $thresholds = null ): Result {
 		$database = Test_Database::seeded( $seed );
 		try {
 			$site    = ( new Site_Locator( new Config_Parser() ) )->locate( dirname( __DIR__ ) . '/fixtures/sites/plain' );
 			$context = Context::with_database( $site, new File_Scanner( $site->root() ), new Read_Only_Connection( $database->driver() ) );
+			if ( null !== $thresholds ) {
+				$context = $context->with_thresholds( $thresholds );
+			}
 
 			return $check->run( $context );
 		} finally {
@@ -106,6 +114,40 @@ final class Database_Checks_Integration_Test extends TestCase {
 		$this->assertSame( 'wptest_posts', $evidence['table_2'] );
 		$this->assertSame( 'wptest_security_log', $evidence['table_3'] );
 		$this->assertGreaterThan( $evidence['table_2_bytes'], $evidence['table_1_bytes'] );
+	}
+
+	public function test_revisions_are_counted_by_type_and_grouped_by_their_post(): void {
+		$result = $this->run_against( new Revisions_Count_Check(), 'posts-revisions.sql', Thresholds::from_config( array( 'perf.revisions.count' => array( 'warning' => 5 ) ), 'test.json' ) );
+
+		$evidence = $result->finding_list()[0]->evidence();
+		$this->assertSame( 6, $evidence['revisions'] );
+		$this->assertSame( 2, $evidence['posts_with_revisions'] );
+		$this->assertSame( array( 2, 4, 1, 2 ), array( $evidence['post_1'], $evidence['post_1_revisions'], $evidence['post_2'], $evidence['post_2_revisions'] ) );
+	}
+
+	public function test_myisam_base_tables_with_the_prefix_are_listed(): void {
+		$result = $this->run_against( new Tables_Engine_Check(), 'tables-engines.sql' );
+
+		$evidence = $result->finding_list()[0]->evidence();
+		$this->assertSame( 3, $evidence['tables_with_prefix'] );
+		$this->assertSame( 2, $evidence['myisam_tables'] );
+		$this->assertSame( array( 'wptest_old_log', 'wptest_terms' ), array( $evidence['table_1'], $evidence['table_2'] ) );
+	}
+
+	public function test_the_real_server_version_is_read_and_judged_by_its_series(): void {
+		$database = Test_Database::seeded( 'tables-engines.sql' );
+		try {
+			$version = $database->driver()->server_version();
+			$result  = $this->run_against( new Db_Version_Check(), 'tables-engines.sql' );
+		} finally {
+			$database->drop();
+		}
+
+		$this->assertSame( 1, preg_match( '/^(?:5\.5\.5-)?(\d+\.\d+)\.\d+/', $version, $match ), $version );
+		$this->assertContains( $result->status(), array( Result::PASS, Result::FINDINGS ), (string) $result->message() );
+		if ( Result::FINDINGS === $result->status() ) {
+			$this->assertStringEndsWith( $match[1], $result->finding_list()[0]->evidence()['series'] );
+		}
 	}
 
 	public function test_administrators_are_found_through_the_prefixed_capabilities_key_and_judged_with_the_bundled_indicators(): void {

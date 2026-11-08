@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace WP_Doctor\Check;
 
 use WP_Doctor\Check\Category\Config\Config_Permissions_Check;
+use WP_Doctor\Check\Category\Config\Db_Version_Check;
 use WP_Doctor\Check\Category\Config\Debug_Enabled_Check;
 use WP_Doctor\Check\Category\Config\Default_Salts_Check;
 use WP_Doctor\Check\Category\Config\Exposed_Files_Check;
@@ -19,16 +20,22 @@ use WP_Doctor\Check\Category\Config\Multisite_Scope_Check;
 use WP_Doctor\Check\Category\Config\Php_Settings_Check;
 use WP_Doctor\Check\Category\Config\Php_Version_Check;
 use WP_Doctor\Check\Category\Config\Writable_Files_Check;
+use WP_Doctor\Check\Category\Config\Xmlrpc_Enabled_Check;
+use WP_Doctor\Check\Category\Disk\Cache_Size_Check;
 use WP_Doctor\Check\Category\Disk\Debug_Log_Size_Check;
 use WP_Doctor\Check\Category\Disk\Error_Log_Size_Check;
 use WP_Doctor\Check\Category\Disk\Leftover_Files_Check;
+use WP_Doctor\Check\Category\Disk\Uploads_Size_Check;
 use WP_Doctor\Check\Category\Performance\Autoload_Orphaned_Check;
 use WP_Doctor\Check\Category\Performance\Autoload_Size_Check;
 use WP_Doctor\Check\Category\Performance\Autoload_Top_Check;
+use WP_Doctor\Check\Category\Performance\Cron_Disabled_Check;
 use WP_Doctor\Check\Category\Performance\Cron_Duplicates_Check;
 use WP_Doctor\Check\Category\Performance\Cron_Overdue_Check;
 use WP_Doctor\Check\Category\Performance\Object_Cache_Missing_Check;
+use WP_Doctor\Check\Category\Performance\Revisions_Count_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Bloat_Check;
+use WP_Doctor\Check\Category\Performance\Tables_Engine_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
 use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
 use WP_Doctor\Check\Category\Security\Admin_Users_Check;
@@ -93,10 +100,13 @@ final class Check_Registry {
 			new Autoload_Orphaned_Check(),
 			new Autoload_Size_Check(),
 			new Autoload_Top_Check(),
+			new Cache_Size_Check(),
 			new Config_Permissions_Check(),
 			new Core_Checksums_Check(),
+			new Cron_Disabled_Check(),
 			new Cron_Duplicates_Check(),
 			new Cron_Overdue_Check(),
+			new Db_Version_Check(),
 			new Debug_Enabled_Check(),
 			new Debug_Log_Size_Check(),
 			new Default_Salts_Check(),
@@ -113,14 +123,18 @@ final class Check_Registry {
 			new Php_Version_Check(),
 			new Recent_Changes_Check(),
 			new Remote_Code_Check(),
+			new Revisions_Count_Check(),
 			new Tables_Bloat_Check(),
+			new Tables_Engine_Check(),
 			new Tables_Largest_Check(),
 			new Transients_Expired_Check(),
 			new Unknown_Plugins_Check(),
 			new Unknown_Themes_Check(),
 			new Uploads_Disguised_Check(),
 			new Uploads_Php_Check(),
-			new Writable_Files_Check()
+			new Uploads_Size_Check(),
+			new Writable_Files_Check(),
+			new Xmlrpc_Enabled_Check()
 		);
 	}
 

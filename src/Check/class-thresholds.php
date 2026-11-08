@@ -49,6 +49,8 @@ final class Thresholds {
 			self::CRITICAL => array( 'bytes', 1073741824 ),
 		),
 		'disk.errorlog.size'      => array( self::WARNING => array( 'bytes', 52428800 ) ),
+		'disk.cache.size'         => array( self::WARNING => array( 'bytes in one cache folder', 1073741824 ) ),
+		'perf.revisions.count'    => array( self::WARNING => array( 'revision rows', 10000 ) ),
 		'sec.users.admins'        => array( self::CRITICAL => array( 'administrators registered within 24 hours', 3 ) ),
 		'sec.recent.changes'      => array( self::INFO => array( 'days a changed PHP file counts as recent', 7 ) ),
 	);

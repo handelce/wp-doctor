@@ -29,6 +29,21 @@ minor release may change the command-line options or the JSON report shape.
   number of days with an `info` threshold in `wp-doctor.json`:
   `{"thresholds": {"sec.recent.changes": {"info": 14}}}`. Skipped on Windows
   and on a site whose files were all written within the same hour.
+- `perf.cron.disabled` (info): `DISABLE_WP_CRON` is on, so scheduled events
+  depend on a system cron job.
+- `perf.revisions.count` (warning): more than 10000 post revisions, with the
+  posts that have the most and what `WP_POST_REVISIONS` keeps.
+- `perf.tables.engine` (info): site tables that still use MyISAM.
+- `disk.uploads.size` (info): the size of the uploads directory and its
+  largest folders.
+- `disk.cache.size` (warning): a `cache`, `litespeed` or `wpo-cache` folder
+  above 1 GiB.
+- `config.xmlrpc.enabled` (info): `xmlrpc.php` with no `.htaccess` rule that
+  blocks it.
+- `config.db.version` (warning): a MySQL or MariaDB series past the end of
+  support its vendor publishes.
+- The `disk.cache.size` and `perf.revisions.count` limits can be set in
+  `wp-doctor.json`.
 
 ### Changed
 

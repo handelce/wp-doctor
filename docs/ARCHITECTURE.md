@@ -417,6 +417,8 @@ last silently. A leading UTF-8 byte order mark is ignored. All three keys apply:
 | `perf.cron.overdue` | | seconds an event is late (3600) | |
 | `disk.debuglog.size` | | bytes (104857600) | bytes (1073741824) |
 | `disk.errorlog.size` | | bytes (52428800) | |
+| `disk.cache.size` | | bytes in one cache folder (1073741824) | |
+| `perf.revisions.count` | | revision rows (10000) | |
 | `sec.users.admins` | | | administrators registered within 24 hours (3) |
 | `sec.recent.changes` | days a changed PHP file counts as recent (7) | | |
 
