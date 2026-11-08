@@ -33,14 +33,22 @@ final class Phar_Build_Test extends TestCase {
 	 */
 	private static $phar = '';
 
+	/**
+	 * What the build printed, shown when it wrote no phar.
+	 *
+	 * @var string
+	 */
+	private static $build_output = '';
+
 	public static function setUpBeforeClass(): void {
 		if ( ! extension_loaded( 'phar' ) ) {
 			return;
 		}
 		self::$directory = sys_get_temp_dir() . '/wpd-phar-' . bin2hex( random_bytes( 6 ) );
 		mkdir( self::$directory );
-		self::$phar = self::$directory . '/wp-doctor.phar';
-		self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . self::$phar ) );
+		self::$phar         = self::$directory . '/wp-doctor.phar';
+		$build              = self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . self::$phar ) );
+		self::$build_output = "exit {$build['exit']}: {$build['stdout']}{$build['stderr']}";
 	}
 
 	public static function tearDownAfterClass(): void {
@@ -57,7 +65,7 @@ final class Phar_Build_Test extends TestCase {
 		if ( ! extension_loaded( 'phar' ) ) {
 			$this->markTestSkipped( 'The phar extension is not loaded, so no phar can be built.' );
 		}
-		$this->assertFileExists( self::$phar, 'The build did not write a phar' );
+		$this->assertFileExists( self::$phar, 'The build did not write a phar; it printed ' . self::$build_output );
 	}
 
 	public function test_the_phar_prints_the_version(): void {
@@ -103,7 +111,7 @@ final class Phar_Build_Test extends TestCase {
 		}
 		$sources = array();
 		foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( "$root/src", \FilesystemIterator::SKIP_DOTS ) ) as $file ) {
-			$sources[] = substr( $file->getPathname(), strlen( "$root/" ) );
+			$sources[] = str_replace( '\\', '/', substr( $file->getPathname(), strlen( "$root/" ) ) );
 		}
 		$expected = array_merge(
 			$sources,
