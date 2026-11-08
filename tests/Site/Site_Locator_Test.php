@@ -174,35 +174,111 @@ final class Site_Locator_Test extends TestCase {
 		}
 	}
 
-	public function test_core_in_a_subdirectory_is_rejected_with_the_directory_to_scan_instead(): void {
+	public function test_core_in_a_subdirectory_named_by_index_php_is_located_with_the_web_root_as_the_root(): void {
 		$tree = new Temp_Tree();
 		try {
-			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
+			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'webroot_';\n" );
 			$tree->file( 'index.php', "<?php\ndefine( 'WP_USE_THEMES', true );\nrequire __DIR__ . '/wp/wp-blog-header.php';\n" );
 			$tree->file( 'wp/wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
 
-			try {
-				$this->locator()->locate( $tree->site() );
-				$this->fail( 'A web root with core in a subdirectory was located as a site' );
-			} catch ( Site_Not_Found_Exception $e ) {
-				$this->assertStringContainsString( 'subdirectory wp', $e->getMessage() );
-				$this->assertStringContainsString( $tree->site() . '/wp', $e->getMessage() );
-				$this->assertStringContainsString( 'wp-content will skip', $e->getMessage() );
-			}
+			$site = $this->locator()->locate( $tree->site() );
+
+			$this->assertSame( $tree->site(), $site->root() );
+			$this->assertSame( 'wp', $site->core_dir() );
+			$this->assertSame( 'wp/wp-includes/version.php', $site->core_path( 'wp-includes/version.php' ) );
+			$this->assertSame( '6.5.2', $site->wp_version() );
+			$this->assertSame( $tree->site() . '/wp-config.php', $site->config_path() );
+			$this->assertSame( 'webroot_', $site->config()->table_prefix() );
 		} finally {
 			$tree->remove();
 		}
 	}
 
-	public function test_a_single_child_holding_core_is_named_even_without_the_index_hint(): void {
+	public function test_core_in_the_root_has_an_empty_core_directory(): void {
+		$tree = new Temp_Tree();
+		try {
+			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
+			$tree->file( 'wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
+
+			$site = $this->locator()->locate( $tree->site() );
+
+			$this->assertSame( '', $site->core_dir() );
+			$this->assertSame( 'wp-includes/version.php', $site->core_path( 'wp-includes/version.php' ) );
+		} finally {
+			$tree->remove();
+		}
+	}
+
+	public function test_wp_config_in_the_core_directory_is_read_before_the_one_in_the_web_root(): void {
+		$tree = new Temp_Tree();
+		try {
+			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'webroot_';\n" );
+			$tree->file( 'index.php', "<?php\nrequire './wp/wp-blog-header.php';\n" );
+			$tree->file( 'other/wp-includes/version.php', "<?php\n\$wp_version = '6.4.0';\n" );
+			$tree->file( 'wp/wp-config.php', "<?php\n\$table_prefix = 'core_';\n" );
+			$tree->file( 'wp/wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
+
+			$site = $this->locator()->locate( $tree->site() );
+
+			$this->assertSame( 'wp', $site->core_dir() );
+			$this->assertSame( $tree->site() . '/wp/wp-config.php', $site->config_path() );
+			$this->assertSame( 'core_', $site->config()->table_prefix() );
+		} finally {
+			$tree->remove();
+		}
+	}
+
+	public function test_index_php_finds_core_when_wp_config_is_only_in_the_core_directory(): void {
+		$tree = new Temp_Tree();
+		try {
+			$tree->file( 'index.php', "<?php\nrequire( dirname( __FILE__ ) . '/cms/wp-blog-header.php' );\n" );
+			$tree->file( 'cms/wp-config.php', "<?php\n\$table_prefix = 'core_';\n" );
+			$tree->file( 'cms/wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
+
+			$site = $this->locator()->locate( $tree->site() );
+
+			$this->assertSame( 'cms', $site->core_dir() );
+			$this->assertSame( $tree->site() . '/cms/wp-config.php', $site->config_path() );
+		} finally {
+			$tree->remove();
+		}
+	}
+
+	public function test_a_single_child_holding_core_is_the_core_directory_when_wp_config_is_in_the_root(): void {
 		$tree = new Temp_Tree();
 		try {
 			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
 			$tree->file( 'core/wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
 			$tree->file( 'wp-content/uploads/a.txt' );
 
+			$this->assertSame( 'core', $this->locator()->locate( $tree->site() )->core_dir() );
+		} finally {
+			$tree->remove();
+		}
+	}
+
+	public function test_a_directory_holding_one_site_without_a_loader_or_config_is_not_a_site(): void {
+		$tree = new Temp_Tree();
+		try {
+			$tree->file( 'html/wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
+			$tree->file( 'html/wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
+
 			$this->expectException( Site_Not_Found_Exception::class );
-			$this->expectExceptionMessage( 'subdirectory core' );
+			$this->expectExceptionMessage( 'wp-includes/version.php is missing' );
+			$this->locator()->locate( $tree->site() );
+		} finally {
+			$tree->remove();
+		}
+	}
+
+	public function test_an_index_php_naming_a_directory_without_core_is_not_followed(): void {
+		$tree = new Temp_Tree();
+		try {
+			$tree->file( 'index.php', "<?php\nrequire __DIR__ . '/wp/wp-blog-header.php';\n" );
+			$tree->file( 'wp/wp-blog-header.php', '<?php' );
+
+			$this->expectException( Site_Not_Found_Exception::class );
+			$this->expectExceptionMessage( 'wp-includes/version.php is missing' );
 			$this->locator()->locate( $tree->site() );
 		} finally {
 			$tree->remove();

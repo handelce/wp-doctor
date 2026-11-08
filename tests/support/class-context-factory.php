@@ -69,6 +69,61 @@ final class Context_Factory {
 	}
 
 	/**
+	 * A context over a temporary site whose core is in a subdirectory: the web
+	 * root holds wp-config.php and an index.php that loads core from there.
+	 * The config, index and version files are written only when missing.
+	 *
+	 * @param Temp_Tree $tree     Tree to read from.
+	 * @param string    $core_dir Subdirectory holding core.
+	 * @param string    $config   PHP statements for wp-config.php in the web root, without the opening tag.
+	 * @return Context
+	 */
+	public static function for_core_in( Temp_Tree $tree, string $core_dir, string $config = '' ): Context {
+		$site = self::core_in_site( $tree, $core_dir, $config );
+
+		return Context::without_database( $site, new File_Scanner( $site->root() ), 'no database in this test' );
+	}
+
+	/**
+	 * A context over a temporary site whose core is in a subdirectory and
+	 * whose options table holds the given options.
+	 *
+	 * @param Temp_Tree             $tree     Tree to read from.
+	 * @param string                $core_dir Subdirectory holding core.
+	 * @param array<string, string> $options  Option values by name, such as upload_path.
+	 * @return Context
+	 */
+	public static function for_core_in_with_options( Temp_Tree $tree, string $core_dir, array $options ): Context {
+		$site            = self::core_in_site( $tree, $core_dir, '' );
+		$driver          = new Options_Driver();
+		$driver->options = $options;
+
+		return Context::with_database( $site, new File_Scanner( $site->root() ), new Read_Only_Connection( $driver ) );
+	}
+
+	/**
+	 * Writes the files of a web root that loads core from a subdirectory, and locates it.
+	 *
+	 * @param Temp_Tree $tree     Tree to write to.
+	 * @param string    $core_dir Subdirectory holding core.
+	 * @param string    $config   PHP statements for wp-config.php in the web root.
+	 * @return \WP_Doctor\Site\Site
+	 */
+	private static function core_in_site( Temp_Tree $tree, string $core_dir, string $config ) {
+		if ( ! is_file( $tree->site() . '/wp-config.php' ) && ! is_file( $tree->site() . "/$core_dir/wp-config.php" ) ) {
+			$tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" . $config );
+		}
+		if ( ! is_file( $tree->site() . '/index.php' ) ) {
+			$tree->file( 'index.php', "<?php\ndefine( 'WP_USE_THEMES', true );\nrequire __DIR__ . '/$core_dir/wp-blog-header.php';\n" );
+		}
+		if ( ! is_file( $tree->site() . "/$core_dir/wp-includes/version.php" ) ) {
+			$tree->file( "$core_dir/wp-includes/version.php", "<?php\n\$wp_version = '6.5.2';\n" );
+		}
+
+		return ( new Site_Locator( new Config_Parser() ) )->locate( $tree->site() );
+	}
+
+	/**
 	 * The same context after one full walk of its tree, so later walks replay it.
 	 *
 	 * @param Context $context Context whose scanner walks.

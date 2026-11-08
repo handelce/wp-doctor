@@ -57,8 +57,13 @@ final class Config_Permissions_Check implements Runs_Without_Config {
 	 * @return Result
 	 */
 	public function run( Context $context ): Result {
-		$site = $context->site();
-		if ( dirname( $site->config_path() ) !== $site->root() ) {
+		$site      = $context->site();
+		$directory = dirname( $site->config_path() );
+		if ( $directory === $site->root() ) {
+			$path = 'wp-config.php';
+		} elseif ( '' !== $site->core_dir() && $directory === $site->root() . '/' . $site->core_dir() ) {
+			$path = $site->core_path( 'wp-config.php' );
+		} else {
 			return Result::skipped( 'wp-config.php is outside the site root, so its permissions are not read' );
 		}
 
@@ -66,9 +71,9 @@ final class Config_Permissions_Check implements Runs_Without_Config {
 			return Result::skipped( 'File permission bits are not meaningful on Windows' );
 		}
 
-		$file = $context->files()->stat( 'wp-config.php' );
+		$file = $context->files()->stat( $path );
 		if ( null === $file || ! $file->is_file() ) {
-			return Result::skipped( 'wp-config.php could not be read from the site root' );
+			return Result::skipped( "$path could not be read from the site root" );
 		}
 		if ( 0 === ( $file->mode() & 0026 ) ) {
 			return Result::pass();
@@ -80,10 +85,10 @@ final class Config_Permissions_Check implements Runs_Without_Config {
 				Severity::warning(),
 				'wp-config.php can be read or changed by other accounts on the server',
 				array(
-					'path' => 'wp-config.php',
+					'path' => $path,
 					'mode' => sprintf( '%04o', $file->mode() ),
 				),
-				'Run `chmod 640 wp-config.php`, or `chmod 600 wp-config.php` when the web server runs as the file owner. '
+				"Run `chmod 640 $path`, or `chmod 600 $path` when the web server runs as the file owner. "
 				. 'If the database password may have been read by someone else, change it. If others could write the file, '
 				. 'compare it with a known good copy before trusting it.'
 			)

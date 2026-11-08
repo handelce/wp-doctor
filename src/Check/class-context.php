@@ -413,7 +413,7 @@ final class Context {
 	 * @return string|null
 	 */
 	public function content_dir_unavailable(): ?string {
-		return $this->resolve_directory( 'WP_CONTENT_DIR', 'wp-content' )[1];
+		return $this->resolve_directory( 'WP_CONTENT_DIR', $this->site->core_path( 'wp-content' ) )[1];
 	}
 
 	/**
@@ -425,7 +425,7 @@ final class Context {
 	 * @throws \LogicException When content_dir_unavailable() is not null.
 	 */
 	public function content_dir(): string {
-		list( $directory, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', 'wp-content' );
+		list( $directory, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', $this->site->core_path( 'wp-content' ) );
 		if ( null === $directory ) {
 			throw new \LogicException( esc_cli( 'Content directory unavailable: ' . $reason ) );
 		}
@@ -557,13 +557,14 @@ final class Context {
 		if ( $config->is_defined( 'WP_DEBUG_LOG' ) && ! ( $config->has( 'WP_DEBUG_LOG' ) && is_bool( $config->value( 'WP_DEBUG_LOG' ) ) ) ) {
 			return $this->resolve_path( 'WP_DEBUG_LOG', null );
 		}
-		list( $content, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', 'wp-content' );
+		list( $content, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', $this->site->core_path( 'wp-content' ) );
 
 		return null === $content ? array( null, $reason ) : array( $content . '/debug.log', null );
 	}
 
 	/**
-	 * The uploads directory: UPLOADS relative to the root when set, else content_dir()/uploads.
+	 * The uploads directory: UPLOADS relative to the core directory when set,
+	 * then the upload_path option, else content_dir()/uploads.
 	 *
 	 * @since 0.1.0
 	 *
@@ -576,7 +577,7 @@ final class Context {
 			if ( null !== $option && '' !== $option ) {
 				return $this->option_directory( 'upload_path', $option );
 			}
-			list( $content, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', 'wp-content' );
+			list( $content, $reason ) = $this->resolve_directory( 'WP_CONTENT_DIR', $this->site->core_path( 'wp-content' ) );
 
 			return null === $content ? array( null, $reason ) : array( $content . '/uploads', null );
 		}
@@ -588,7 +589,7 @@ final class Context {
 			return array( null, 'UPLOADS in wp-config.php is not a string' );
 		}
 
-		return $this->relative_directory( 'UPLOADS in wp-config.php', trim( $value, '/' ) );
+		return $this->core_relative_directory( 'UPLOADS in wp-config.php', trim( $value, '/' ) );
 	}
 
 	/**
@@ -641,8 +642,8 @@ final class Context {
 	}
 
 	/**
-	 * A directory named by an option: absolute, or relative to the site root as
-	 * WordPress reads upload_path relative to ABSPATH.
+	 * A directory named by an option: absolute, or relative to the core
+	 * directory, as WordPress reads upload_path relative to ABSPATH.
 	 *
 	 * @since 0.1.0
 	 *
@@ -653,7 +654,7 @@ final class Context {
 	private function option_directory( string $name, string $value ): array {
 		$value = rtrim( str_replace( '\\', '/', $value ), '/' );
 		if ( '/' !== $value[0] && 1 !== preg_match( '#^[A-Za-z]:/#', $value ) ) {
-			return $this->relative_directory( "The $name option", ltrim( $value, '/' ) );
+			return $this->core_relative_directory( "The $name option", ltrim( $value, '/' ) );
 		}
 		$root     = rtrim( $this->site->root(), '/' );
 		$absolute = $this->inside_root( $value );
@@ -704,7 +705,8 @@ final class Context {
 		}
 		$path = $config->path_constant( $name );
 		if ( null !== $path ) {
-			$base     = '__DIR__' === $path['base'] ? rtrim( dirname( $this->site->config_path() ), '/' ) : $root;
+			$core     = '' === $this->site->core_dir() ? $root : $root . '/' . $this->site->core_dir();
+			$base     = '__DIR__' === $path['base'] ? rtrim( dirname( $this->site->config_path() ), '/' ) : $core;
 			$absolute = $base . '/' . ltrim( $path['suffix'], '/' );
 		} elseif ( $config->has( $name ) && is_string( $config->value( $name ) ) ) {
 			$absolute = $config->value( $name );
@@ -737,5 +739,21 @@ final class Context {
 		}
 
 		return array( $relative, null );
+	}
+
+	/**
+	 * Turns a path that WordPress reads relative to ABSPATH, the core
+	 * directory, into one relative to the root.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $name     Setting the path came from, named in the reason.
+	 * @param string $relative Path relative to the core directory, without surrounding slashes.
+	 * @return array{0: string|null, 1: string|null} The path relative to the root, or null and the reason.
+	 */
+	private function core_relative_directory( string $name, string $relative ): array {
+		list( $path, $reason ) = $this->relative_directory( $name, $relative );
+
+		return null === $path ? array( null, $reason ) : array( $this->site->core_path( $path ), null );
 	}
 }

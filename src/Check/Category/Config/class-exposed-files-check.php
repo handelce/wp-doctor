@@ -17,8 +17,9 @@ use WP_Doctor\Report\Result;
 use WP_Doctor\Report\Severity;
 
 /**
- * Looks at the top level of the web root for version-control data, environment
- * files and phpinfo pages, which reveal secrets or server details when the web
+ * Looks at the top level of the web root, and of the core directory when core
+ * is in a subdirectory, for version-control data, environment files and
+ * phpinfo pages, which reveal secrets or server details when the web
  * server serves them. Reachability is not tested, so findings say "likely".
  * Copies of wp-config.php are reported by disk.leftovers.web.
  *
@@ -74,37 +75,41 @@ final class Exposed_Files_Check implements Runs_Without_Config {
 	}
 
 	/**
-	 * Lists sensitive files at the top of the web root.
+	 * Lists sensitive files at the top of the web root and the core directory.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param Context $context Gives the file scanner, which lists and reads the top level of the site root.
+	 * @param Context $context Gives the file scanner, which lists and reads the top level of the site root and the core directory.
 	 * @return Result
 	 */
 	public function run( Context $context ): Result {
 		$files   = $context->files();
+		$core    = $context->site()->core_dir();
 		$serious = array();
 		$version = array();
-		$walk    = $files->walk( '', false );
-		foreach ( $walk as $entry ) {
-			$name = strtolower( $entry->name() );
-			if ( ! $this->sort_by_name( $entry->path(), $name, $serious, $version )
-				&& $entry->is_file() && 'php' === $entry->extension() && $this->is_info_page( $name, $files->read( $entry->path(), self::READ_BYTES ) ) ) {
-				$serious[ $entry->path() ] = 'phpinfo page';
+		$gaps    = array();
+		foreach ( '' === $core ? array( '' ) : array( '', $core ) as $top ) {
+			$walk = $files->walk( $top, false );
+			foreach ( $walk as $entry ) {
+				$name = strtolower( $entry->name() );
+				if ( ! $this->sort_by_name( $entry->path(), $name, $serious, $version )
+					&& $entry->is_file() && 'php' === $entry->extension() && $this->is_info_page( $name, $files->read( $entry->path(), self::READ_BYTES ) ) ) {
+					$serious[ $entry->path() ] = 'phpinfo page';
+				}
 			}
-		}
-		$gaps = array_filter( array( $walk->listing_gap() ) );
-		foreach ( $walk->skipped_links() as $path ) {
-			$name = strtolower( basename( $path ) );
-			if ( ! $this->sort_by_name( $path, $name, $serious, $version ) && $this->may_be_info_page( $name ) ) {
-				$gaps[] = "$path is a symlink that was not followed, so it was not checked for phpinfo()";
+			$gaps = array_merge( $gaps, array_filter( array( $walk->listing_gap() ) ) );
+			foreach ( $walk->skipped_links() as $path ) {
+				$name = strtolower( basename( $path ) );
+				if ( ! $this->sort_by_name( $path, $name, $serious, $version ) && $this->may_be_info_page( $name ) ) {
+					$gaps[] = "$path is a symlink that was not followed, so it was not checked for phpinfo()";
+				}
 			}
 		}
 		$incomplete = array() !== $gaps;
 
 		if ( array() === $serious && array() === $version ) {
 			return $incomplete
-				? Result::skipped( 'No sensitive files were found, but not all of the site root was examined: ' . implode( '; ', $gaps ) )
+				? Result::skipped( 'No sensitive files were found, but not all of the top level was examined: ' . implode( '; ', $gaps ) )
 				: Result::pass();
 		}
 

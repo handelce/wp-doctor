@@ -44,6 +44,22 @@ final class Bin_Smoke_Test extends TestCase {
 		$this->assertNotEmpty( $data['summary'], 'The report has no summary' );
 	}
 
+	public function test_the_script_scans_a_web_root_whose_core_is_in_a_subdirectory(): void {
+		list( $code, $output ) = $this->run_bin( array( 'scan', dirname( __DIR__ ) . '/fixtures/sites/subdirectory-core', '--format=json', '--offline' ) );
+
+		$data = json_decode( $output, true );
+
+		$this->assertIsArray( $data, $output );
+		$this->assertLessThan( 3, $code, $output );
+		$this->assertSame( '6.5.2', $data['site']['wp_version'] );
+		$found = array();
+		foreach ( $data['findings'] as $finding ) {
+			$found[ $finding['id'] ] = $finding['evidence'];
+		}
+		$this->assertArrayHasKey( 'config.debug.enabled', $found, 'wp-config.php in the web root was not read' );
+		$this->assertSame( 'wp/readme.html', $found['config.exposed.files']['path_1'] ?? null, 'The top of the core directory was not listed' );
+	}
+
 	public function test_the_script_exits_three_for_a_bad_path(): void {
 		list( $code, $output ) = $this->run_bin( array( 'scan', '/nonexistent/example.test' ) );
 

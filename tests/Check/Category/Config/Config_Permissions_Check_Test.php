@@ -146,4 +146,27 @@ final class Config_Permissions_Check_Test extends TestCase {
 		$this->assertSame( Result::SKIPPED, $result->status() );
 		$this->assertStringContainsString( 'outside the site root', (string) $result->message() );
 	}
+
+	public function test_a_config_in_the_core_directory_is_judged_and_named_by_its_path(): void {
+		File_Modes::require_unix_modes();
+		$this->tree->file( 'wp/wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" );
+		$context = Context_Factory::for_core_in( $this->tree, 'wp' );
+		$this->assertSame( $this->tree->site() . '/wp/wp-config.php', $context->site()->config_path() );
+		chmod( $this->tree->site() . '/wp/wp-config.php', 0644 );
+
+		$finding = ( new Config_Permissions_Check() )->run( $context )->finding_list()[0];
+
+		$this->assertSame( 'wp/wp-config.php', $finding->evidence()['path'] );
+		$this->assertStringContainsString( 'chmod 640 wp/wp-config.php', $finding->fix() );
+	}
+
+	public function test_a_config_in_the_web_root_above_a_core_subdirectory_is_judged(): void {
+		File_Modes::require_unix_modes();
+		$context = Context_Factory::for_core_in( $this->tree, 'wp' );
+		chmod( $this->tree->site() . '/wp-config.php', 0644 );
+
+		$finding = ( new Config_Permissions_Check() )->run( $context )->finding_list()[0];
+
+		$this->assertSame( 'wp-config.php', $finding->evidence()['path'] );
+	}
 }

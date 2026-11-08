@@ -154,4 +154,20 @@ final class Exposed_Files_Check_Test extends TestCase {
 		$this->assertArrayHasKey( 'warning', $findings );
 		$this->assertSame( '.env', $findings['warning']->evidence()['path_1'] );
 	}
+
+	public function test_with_core_in_a_subdirectory_the_top_of_the_core_directory_is_read_too(): void {
+		$this->tree->file( '.env' );
+		$this->tree->file( 'wp/readme.html' );
+		$this->tree->file( 'wp/info.php', '<?php phpinfo();' );
+		$this->tree->file( 'wp/wp-includes/deeper.php', '<?php phpinfo();' );
+		$context = Context_Factory::for_core_in( $this->tree, 'wp' );
+		$this->assertSame( 'wp', $context->site()->core_dir() );
+
+		$findings = $this->by_severity( ( new Exposed_Files_Check() )->run( $context ) );
+
+		$this->assertSame( '.env', $findings['warning']->evidence()['path_1'] );
+		$this->assertSame( 'wp/info.php', $findings['warning']->evidence()['path_2'] );
+		$this->assertArrayNotHasKey( 'path_3', $findings['warning']->evidence() );
+		$this->assertSame( 'wp/readme.html', $findings['info']->evidence()['path_1'] );
+	}
 }

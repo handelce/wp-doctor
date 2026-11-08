@@ -51,9 +51,10 @@ final class Site_Locator {
 	/**
 	 * Locates the site at a path.
 	 *
-	 * The path is the WordPress root, the directory holding wp-includes. The
-	 * config file is read from the root or, as WordPress itself allows, its
-	 * parent when the parent is not a WordPress root too.
+	 * The path is the site root: the directory holding wp-includes, or the web
+	 * root of a site whose core is in a subdirectory. The config file is read
+	 * as WordPress reads it, from the core directory or, when that directory's
+	 * parent is not a WordPress root too, from the parent.
 	 *
 	 * @since 0.1.0
 	 *
@@ -69,31 +70,25 @@ final class Site_Locator {
 		if ( ! is_dir( $root ) ) {
 			throw new Site_Not_Found_Exception( esc_cli( "Path is not a directory: $root" ) );
 		}
-		if ( ! is_file( "$root/wp-includes/version.php" ) ) {
-			$core = $this->core_subdirectory( $root );
-			if ( null !== $core ) {
-				throw new Site_Not_Found_Exception(
-					esc_cli(
-						"WordPress core is in the subdirectory $core of $root, a layout this version does not scan as one site. "
-						. "Scan $root/$core instead; checks that read wp-content will skip because it lies outside that directory."
-					)
-				);
-			}
+		$core_dir = is_file( "$root/wp-includes/version.php" ) ? '' : $this->core_subdirectory( $root );
+		if ( null === $core_dir ) {
 			throw new Site_Not_Found_Exception( esc_cli( "No WordPress installation at $root: wp-includes/version.php is missing" ) );
 		}
 
-		$config_path = $this->find_config( $root );
+		$config_path = $this->find_config( '' === $core_dir ? $root : "$root/$core_dir" );
 		$source      = $this->read( $config_path, self::MAX_CONFIG_BYTES );
 		$config      = null === $source
 			? Config::unreadable( 'wp-config.php could not be read by the account running wp-doctor, or is larger than ' . self::MAX_CONFIG_BYTES . ' bytes' )
 			: $this->parser->parse( $source );
 
-		return new Site( $root, $config_path, $this->read_version( $root ), $config );
+		return new Site( $root, $config_path, $this->read_version( $root, $core_dir ), $config, $core_dir );
 	}
 
 	/**
 	 * The child directory holding WordPress core when the web root only holds
-	 * the config and an index.php that loads core from a subdirectory.
+	 * an index.php that loads core from a subdirectory. The child is the one
+	 * index.php names or, when wp-config.php is in the root, the only child
+	 * that holds core.
 	 *
 	 * @since 0.1.0
 	 *
@@ -101,14 +96,14 @@ final class Site_Locator {
 	 * @return string|null The subdirectory name, or null when the layout is not that one.
 	 */
 	private function core_subdirectory( string $root ): ?string {
-		if ( ! is_file( "$root/wp-config.php" ) ) {
-			return null;
-		}
 		$scanner = new File_Scanner( $root, File_Scanner::DEFAULT_MAX_FILES, self::MAX_VERSION_BYTES );
 		$index   = $scanner->read( 'index.php' );
-		if ( null !== $index && 1 === preg_match( '#[\'"]/?([A-Za-z0-9_.\-]+)/wp-blog-header\.php[\'"]#', $index, $m )
-			&& null !== $scanner->stat( $m[1] . '/wp-includes/version.php' ) ) {
+		if ( null !== $index && 1 === preg_match( '#[\'"](?:\./|/)?([A-Za-z0-9_.\-]+)/wp-blog-header\.php[\'"]#', $index, $m )
+			&& '.' !== $m[1] && '..' !== $m[1] && null !== $scanner->stat( $m[1] . '/wp-includes/version.php' ) ) {
 			return $m[1];
+		}
+		if ( ! is_file( "$root/wp-config.php" ) ) {
+			return null;
 		}
 		$found = array();
 		foreach ( $scanner->walk( '', false ) as $entry ) {
@@ -121,25 +116,25 @@ final class Site_Locator {
 	}
 
 	/**
-	 * Finds wp-config.php in the root, or in its parent when the parent is not a WordPress root too.
+	 * Finds wp-config.php in the core directory, or in its parent when the parent is not a WordPress root too.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string $root WordPress root.
+	 * @param string $core Absolute path of the directory holding core.
 	 * @return string
 	 * @throws Site_Not_Found_Exception When no config file exists.
 	 */
-	private function find_config( string $root ): string {
-		if ( is_file( "$root/wp-config.php" ) ) {
-			return "$root/wp-config.php";
+	private function find_config( string $core ): string {
+		if ( is_file( "$core/wp-config.php" ) ) {
+			return "$core/wp-config.php";
 		}
 
-		$parent = dirname( $root );
+		$parent = dirname( $core );
 		if ( is_file( "$parent/wp-config.php" ) && ! is_file( "$parent/wp-settings.php" ) ) {
 			return "$parent/wp-config.php";
 		}
 
-		throw new Site_Not_Found_Exception( esc_cli( "wp-config.php not found in $root or its parent" ) );
+		throw new Site_Not_Found_Exception( esc_cli( "wp-config.php not found in $core or its parent" ) );
 	}
 
 	/**
@@ -147,11 +142,13 @@ final class Site_Locator {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string $root WordPress root.
+	 * @param string $root     Site root.
+	 * @param string $core_dir Directory holding core, relative to the root.
 	 * @return string|null Null when the file has no recognisable $wp_version.
 	 */
-	private function read_version( string $root ): ?string {
-		$source = ( new File_Scanner( $root, File_Scanner::DEFAULT_MAX_FILES, self::MAX_VERSION_BYTES ) )->read( 'wp-includes/version.php' );
+	private function read_version( string $root, string $core_dir ): ?string {
+		$path   = '' === $core_dir ? 'wp-includes/version.php' : "$core_dir/wp-includes/version.php";
+		$source = ( new File_Scanner( $root, File_Scanner::DEFAULT_MAX_FILES, self::MAX_VERSION_BYTES ) )->read( $path );
 		if ( null !== $source && 1 === preg_match( '/^\s*\$wp_version\s*=\s*\'([0-9A-Za-z.\-]+)\'\s*;/m', $source, $m ) ) {
 			return $m[1];
 		}

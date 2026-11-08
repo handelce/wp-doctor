@@ -24,8 +24,10 @@ use WP_Doctor\Report\Severity;
 /**
  * Fetches the MD5 of every file in the installed WordPress release and
  * compares it with the site. Files that differ or are gone are reported, and so
- * are files inside wp-admin and wp-includes, or PHP files in the site root,
- * that the release does not contain. wp-content is not compared: themes,
+ * are files inside wp-admin and wp-includes, or PHP files at the top of the
+ * core directory or the site root, that the release does not contain. When
+ * core is in a subdirectory, the root's index.php loads it and is expected to
+ * differ from the release. wp-content is not compared: themes,
  * plugins and the sample documents are removed or edited on healthy sites.
  * Release files that are excluded, lead outside the site root or are too large
  * to hash are counted as not compared, never as missing.
@@ -74,9 +76,10 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 		if ( null !== $unavailable ) {
 			return Result::skipped( $unavailable );
 		}
-		$version = $context->site()->wp_version();
+		$site    = $context->site();
+		$version = $site->wp_version();
 		if ( null === $version ) {
-			return Result::skipped( 'The WordPress version could not be read from wp-includes/version.php' );
+			return Result::skipped( 'The WordPress version could not be read from ' . $site->core_path( 'wp-includes/version.php' ) );
 		}
 
 		$locale = $this->package_locale( $context );
@@ -87,16 +90,20 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 			return Result::skipped( 'Official checksums for WordPress ' . $version . ' could not be obtained: ' . $e->getMessage() );
 		}
 
+		$release = array();
+		foreach ( $expected as $path => $md5 ) {
+			if ( ! $this->is_not_compared( (string) $path ) ) {
+				$release[ $site->core_path( (string) $path ) ] = $md5;
+			}
+		}
+
 		$files        = $context->files();
 		$modified     = array();
 		$missing      = array();
 		$not_compared = array();
 		$unreadable   = 0;
-		foreach ( $expected as $path => $md5 ) {
-			$path = (string) $path;
-			if ( $this->is_not_compared( $path ) ) {
-				continue;
-			}
+		foreach ( $release as $path => $md5 ) {
+			$path     = (string) $path;
 			$presence = $files->presence( $path );
 			if ( File_Scanner::ABSENT === $presence || File_Scanner::BROKEN_LINK === $presence ) {
 				$missing[] = $path;
@@ -128,22 +135,25 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 		$gaps         = array();
 		try {
 			foreach ( self::CORE_DIRECTORIES as $directory ) {
-				$walk = $files->walk( $directory );
+				$walk = $files->walk( $site->core_path( $directory ) );
 				foreach ( $walk as $entry ) {
-					if ( $entry->is_file() && ! isset( $expected[ $entry->path() ] ) && ! $this->is_ignored_extra( $entry->name() ) ) {
+					if ( $entry->is_file() && ! isset( $release[ $entry->path() ] ) && ! $this->is_ignored_extra( $entry->name() ) ) {
 						$unknown_core[] = $entry->path();
 					}
 				}
 				$gaps[] = $walk->incomplete_reason();
 			}
-			$walk = $files->walk( '', false );
-			foreach ( $walk as $entry ) {
-				if ( $entry->is_file() && 'php' === $entry->extension() && ! isset( $expected[ $entry->path() ] )
-					&& ! in_array( $entry->name(), self::IGNORED_ROOT_FILES, true ) && ! $this->is_ignored_extra( $entry->name() ) ) {
-					$unknown_root[] = $entry->path();
+			$tops = '' === $site->core_dir() ? array( '' ) : array( $site->core_dir(), '' );
+			foreach ( $tops as $top ) {
+				$walk = $files->walk( $top, false );
+				foreach ( $walk as $entry ) {
+					if ( $entry->is_file() && 'php' === $entry->extension() && ! isset( $release[ $entry->path() ] )
+						&& ! $this->is_expected_at_top( $entry->name(), $top !== $site->core_dir() ) ) {
+						$unknown_root[] = $entry->path();
+					}
 				}
+				$gaps[] = $walk->incomplete_reason();
 			}
-			$gaps[] = $walk->incomplete_reason();
 		} catch ( Path_Unavailable_Exception $e ) {
 			return Result::skipped( 'A WordPress core directory could not be read: ' . $e->getMessage() );
 		}
@@ -235,7 +245,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 	 * @return string
 	 */
 	private function package_locale( Context $context ): string {
-		$source = $context->files()->read( 'wp-includes/version.php', self::MAX_VERSION_BYTES );
+		$source = $context->files()->read( $context->site()->core_path( 'wp-includes/version.php' ), self::MAX_VERSION_BYTES );
 		if ( null !== $source && 1 === preg_match( '/^\s*\$wp_local_package\s*=\s*\'([^\']*)\'\s*;/m', $source, $match ) && '' !== $match[1] ) {
 			return $match[1];
 		}
@@ -248,11 +258,25 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string $path Path relative to the site root.
+	 * @param string $path Path relative to the core directory, as the release lists it.
 	 * @return bool
 	 */
 	private function is_not_compared( string $path ): bool {
 		return 0 === strpos( $path, 'wp-content/' ) || in_array( $path, self::IGNORED_ROOT_FILES, true );
+	}
+
+	/**
+	 * True for a PHP file that healthy sites keep at the top of the core
+	 * directory or the web root although the release does not list it.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $name        File name.
+	 * @param bool   $is_web_root True for the web root above a core subdirectory, where index.php loads core.
+	 * @return bool
+	 */
+	private function is_expected_at_top( string $name, bool $is_web_root ): bool {
+		return in_array( $name, self::IGNORED_ROOT_FILES, true ) || $this->is_ignored_extra( $name ) || ( $is_web_root && 'index.php' === $name );
 	}
 
 	/**
