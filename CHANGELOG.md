@@ -5,6 +5,16 @@ Notable changes to wp-doctor, by release. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0.0, any
 minor release may change the command-line options or the JSON report shape.
 
+## [Unreleased]
+
+### Added
+
+- A site whose WordPress core is in a subdirectory of the web root, with an
+  `index.php` that loads it from there, is scanned as one site. Give the web
+  root as the path. `wp-config.php` is read from the core directory or the
+  web root, and the content directory, `UPLOADS` and `upload_path` are found
+  as WordPress finds them.
+
 ## [0.1.1] - 2026-11-08
 
 ### Changed
@@ -60,5 +70,6 @@ First release.
 - For the database checks: MySQL 5.6.5 or MariaDB 10.0 or later.
 - Linux or macOS. Windows is not supported yet.
 
+[Unreleased]: https://github.com/handelce/wp-doctor/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.1
 [0.1.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.0

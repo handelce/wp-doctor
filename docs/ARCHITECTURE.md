@@ -154,8 +154,9 @@ and must stay inside the root, and `read` and `hash` check after opening that th
 open file is still the resolved path, so a path swapped for a symlink in between
 is refused. `hash` refuses files above 64 MiB with `File_Too_Large_Exception`.
 `Site_Locator` reads `wp-includes/version.php` through a scanner too. Its one
-direct read is `wp-config.php`, which WordPress allows in the root's parent,
-outside any scanner; it is read as text with a 1 MiB cap and never executed.
+direct read is `wp-config.php`, which WordPress allows in the parent of the core
+directory, outside any scanner; it is read as text with a 1 MiB cap and never
+executed.
 
 The only network access is the checksum lookup: HTTPS only, certificates verified,
 no redirects, a size limit, and the version and locale from the site are validated
@@ -225,8 +226,10 @@ checksums, error logs, world-writable files, exposed files, the PHP version from
 ## Moved directories
 
 `Context` resolves `WP_CONTENT_DIR` from a literal or one of the path shapes
-above, and `UPLOADS` from a literal relative path, when the result stays inside
-the WordPress root, and a string `WP_DEBUG_LOG` the same way. A location outside
+above, and `UPLOADS` from a literal path relative to the core directory, when
+the result stays inside the site root, and a string `WP_DEBUG_LOG` the same way.
+`ABSPATH . '<literal>'` starts at the core directory and `__DIR__` at the
+directory holding `wp-config.php`. A location outside
 the root, a parent segment, the root itself, or a computed value makes the
 dependent checks skip with that reason.
 `WP_PLUGIN_DIR` and `WPMU_PLUGIN_DIR` are not followed: when either is defined
@@ -236,10 +239,28 @@ location.
 An absolute literal is resolved with `real_path()` before it is compared with
 the root, so a document root reached through a symlink still matches. When
 `UPLOADS` is not set, WordPress takes the uploads directory from the
-`upload_path` option, so `Context` reads it (absolute, or relative to the root)
-before falling back to `wp-content/uploads`. Without the database that option
+`upload_path` option, so `Context` reads it (absolute, or relative to the core
+directory) before falling back to `uploads` in the content directory. Without the database that option
 cannot be read: `uploads_dir_unconfirmed()` gives the reason, the uploads checks
 still report what they find, and a clean result becomes a skip.
+
+## Core in a subdirectory
+
+WordPress can live in a subdirectory of the web root, with an `index.php` in the
+web root that loads `<dir>/wp-blog-header.php`. The path given on the command
+line is always the root that is scanned. When it holds no
+`wp-includes/version.php`, `Site_Locator` takes the core directory from that
+`index.php`, or, when `wp-config.php` is in the root, from the only child that
+holds `wp-includes/version.php`. `Site::core_dir()` names it, empty when core is
+in the root, and `Site::core_path()` turns a path inside core into one relative
+to the root.
+
+The core directory is ABSPATH. `wp-config.php` is looked for there first and
+then in its parent, as WordPress does; the content directory defaults to
+`wp-content` inside it. Checks that compare or list core files
+(`sec.core.checksums`, `config.exposed.files`) read it through `core_path()` and
+also look at the top of the web root, which serves files too. Every evidence path
+stays relative to the scanned root, such as `wp/wp-includes/functions.php`.
 
 ## Walking the filesystem safely
 

@@ -52,6 +52,9 @@ sha256sum -c wp-doctor.phar.sha256
 php wp-doctor.phar scan /path/to/site
 ```
 
+The path is the directory holding `wp-includes`, or the web root when WordPress
+core is in a subdirectory of it (an `index.php` that loads `wp/wp-blog-header.php`).
+
 On macOS, use `shasum -a 256 -c wp-doctor.phar.sha256`.
 
 ## Platforms
