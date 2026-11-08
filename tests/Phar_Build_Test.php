@@ -13,7 +13,11 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Application;
 use WP_Doctor\Check\Category\Security\Rogue_Admin_Indicators;
 
+use function WP_Doctor\esc_cli;
+
 final class Phar_Build_Test extends TestCase {
+
+	private const TIMEOUT_SECONDS = 120;
 
 	/**
 	 * Directory holding the phar built for this class.
@@ -136,37 +140,55 @@ final class Phar_Build_Test extends TestCase {
 	}
 
 	/**
-	 * Runs PHP with the given arguments, without Xdebug.
+	 * Runs PHP with the given arguments, without Xdebug. Output goes to files,
+	 * since a pipe left unread can block the child on Windows.
 	 *
 	 * @param array<int, string> $args Arguments after the PHP binary.
 	 * @return array{exit: int, stdout: string, stderr: string}
+	 * @throws \RuntimeException When PHP cannot start or runs past the time limit.
 	 */
 	private static function run_php( array $args ): array {
 		$command = escapeshellarg( PHP_BINARY ) . ' -d xdebug.mode=off';
 		foreach ( $args as $arg ) {
 			$command .= ' ' . escapeshellarg( $arg );
 		}
+		$out     = (string) tempnam( sys_get_temp_dir(), 'wpd-out' );
+		$err     = (string) tempnam( sys_get_temp_dir(), 'wpd-err' );
 		$pipes   = array();
 		$process = proc_open( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Runs the built phar in its own PHP process.
 			$command,
 			array(
-				1 => array( 'pipe', 'w' ),
-				2 => array( 'pipe', 'w' ),
+				1 => array( 'file', $out, 'w' ),
+				2 => array( 'file', $err, 'w' ),
 			),
-			$pipes
+			$pipes,
+			null,
+			null,
+			array( 'bypass_shell' => true )
 		);
 		if ( ! is_resource( $process ) ) {
 			throw new \RuntimeException( 'Could not start PHP' );
 		}
-		$stdout = (string) stream_get_contents( $pipes[1] );
-		$stderr = (string) stream_get_contents( $pipes[2] );
-		fclose( $pipes[1] );
-		fclose( $pipes[2] );
-
-		return array(
-			'exit'   => proc_close( $process ),
-			'stdout' => $stdout,
-			'stderr' => $stderr,
+		$deadline = microtime( true ) + self::TIMEOUT_SECONDS;
+		$status   = proc_get_status( $process );
+		while ( $status['running'] ) {
+			if ( microtime( true ) > $deadline ) {
+				proc_terminate( $process );
+				proc_close( $process );
+				throw new \RuntimeException( esc_cli( 'PHP did not finish within ' . self::TIMEOUT_SECONDS . " seconds: $command" ) );
+			}
+			usleep( 20000 );
+			$status = proc_get_status( $process );
+		}
+		proc_close( $process );
+		$result = array(
+			'exit'   => (int) $status['exitcode'],
+			'stdout' => (string) file_get_contents( $out ),
+			'stderr' => (string) file_get_contents( $err ),
 		);
+		unlink( $out );
+		unlink( $err );
+
+		return $result;
 	}
 }

@@ -19,6 +19,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
@@ -59,6 +60,7 @@ jobs:
   smoke:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: true
       matrix:
@@ -92,6 +94,7 @@ jobs:
   release:
     needs: [build, smoke]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
