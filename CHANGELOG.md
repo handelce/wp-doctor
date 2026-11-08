@@ -18,6 +18,9 @@ minor release may change the command-line options or the JSON report shape.
   outside any plugin, theme or WordPress core, such as a file in uploads
   (warning), and events whose hook no installed code names, likely left by a
   removed plugin (info).
+- `sec.content.injected`: published posts holding a script from another host
+  or an inline script that hides what it does (warning), and posts changed in
+  the last 30 days that hold defacement text such as "hacked by" (info).
 
 ### Changed
 

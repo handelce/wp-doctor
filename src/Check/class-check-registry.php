@@ -42,6 +42,7 @@ use WP_Doctor\Check\Category\Security\Admin_Users_Check;
 use WP_Doctor\Check\Category\Security\Core_Checksums_Check;
 use WP_Doctor\Check\Category\Security\Cron_Persistence_Check;
 use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
+use WP_Doctor\Check\Category\Security\Injected_Content_Check;
 use WP_Doctor\Check\Category\Security\Obfuscated_Code_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
 use WP_Doctor\Check\Category\Security\Plugin_Checksums_Check;
@@ -117,6 +118,7 @@ final class Check_Registry {
 			new Exposed_Files_Check(),
 			new File_Edit_Enabled_Check(),
 			new Inactive_Plugins_Check(),
+			new Injected_Content_Check(),
 			new Leftover_Files_Check(),
 			new Multisite_Scope_Check(),
 			new Obfuscated_Code_Check(),

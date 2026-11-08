@@ -12,6 +12,7 @@ use WP_Doctor\Check\Category\Performance\Tables_Engine_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
 use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
 use WP_Doctor\Check\Category\Security\Admin_Users_Check;
+use WP_Doctor\Check\Category\Security\Injected_Content_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
 use WP_Doctor\Check\Check;
 use WP_Doctor\Check\Context;
@@ -148,6 +149,21 @@ final class Database_Checks_Integration_Test extends TestCase {
 		if ( Result::FINDINGS === $result->status() ) {
 			$this->assertStringEndsWith( $match[1], $result->finding_list()[0]->evidence()['series'] );
 		}
+	}
+
+	public function test_injected_scripts_and_recent_defacement_are_found_in_published_posts_only(): void {
+		$result = $this->run_against( new Injected_Content_Check( 1794096000 ), 'posts-injected.sql' );
+
+		$by = array();
+		foreach ( $result->finding_list() as $finding ) {
+			$by[ $finding->severity()->name() ] = $finding->evidence();
+		}
+		$this->assertSame( array( 'warning', 'info' ), array_keys( $by ) );
+		$this->assertSame( 2, $by['warning']['posts_with_scripts'] );
+		$this->assertSame( array( 2, 'script from cdn.bad.invalid' ), array( $by['warning']['post_1'], $by['warning']['post_1_scripts'] ) );
+		$this->assertArrayNotHasKey( 'post_2', $by['warning'] );
+		$this->assertSame( 1, $by['info']['posts_flagged'] );
+		$this->assertSame( 5, $by['info']['post_1'] );
 	}
 
 	public function test_administrators_are_found_through_the_prefixed_capabilities_key_and_judged_with_the_bundled_indicators(): void {
