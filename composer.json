@@ -1,6 +1,6 @@
 {
 	"name": "handelce/wp-doctor",
-	"description": "Read-only health and compromise scanner for WordPress sites. One command, a ranked report, a fix for every finding.",
+	"description": "Read-only health and compromise scanner for WordPress. Point it at a site directory and get a ranked report of what is slow, bloated, misconfigured, or compromised, with a fix for every finding.",
 	"type": "library",
 	"license": "MIT",
 	"homepage": "https://github.com/handelce/wp-doctor",
