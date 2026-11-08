@@ -85,6 +85,15 @@ core is in a subdirectory of it (an `index.php` that loads `wp/wp-blog-header.ph
 
 On macOS, use `shasum -a 256 -c wp-doctor.phar.sha256`.
 
+Or install it with Composer, which puts `wp-doctor` in Composer's global `bin`
+directory (add that directory, shown by `composer global config bin-dir --absolute`,
+to your `PATH`):
+
+```
+composer global require handelce/wp-doctor
+wp-doctor scan /path/to/site
+```
+
 The build is reproducible, so you can also check the phar against the source:
 build the release tag yourself and compare the checksum. Use PHP 7.2 or later
 with the phar extension.
