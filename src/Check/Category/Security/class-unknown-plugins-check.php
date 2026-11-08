@@ -110,7 +110,7 @@ final class Unknown_Plugins_Check implements Check {
 	 * @param string         $name    Folder name.
 	 * @return string|null
 	 */
-	private function folder_problem( Code_Directory $plugins, string $name ): ?string {
+	public function folder_problem( Code_Directory $plugins, string $name ): ?string {
 		if ( array() === $plugins->php_under( $name ) ) {
 			return null;
 		}
@@ -143,7 +143,7 @@ final class Unknown_Plugins_Check implements Check {
 	 * @param File_Info      $entry   The file.
 	 * @return string|null
 	 */
-	private function file_problem( Code_Directory $plugins, string $name, File_Info $entry ): ?string {
+	public function file_problem( Code_Directory $plugins, string $name, File_Info $entry ): ?string {
 		if ( ! Code_Directory::is_php( $entry ) ) {
 			return null;
 		}

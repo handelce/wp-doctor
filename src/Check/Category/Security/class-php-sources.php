@@ -50,6 +50,15 @@ final class Php_Sources {
 	private $word_groups;
 
 	/**
+	 * Pattern a file's text must also match. Null when the words alone decide.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @var string|null
+	 */
+	private $pattern;
+
+	/**
 	 * PHP files read, in full or in part.
 	 *
 	 * @since 0.2.0
@@ -105,6 +114,23 @@ final class Php_Sources {
 		}
 		$this->context     = $context;
 		$this->word_groups = $word_groups;
+	}
+
+	/**
+	 * Sources whose files are handed over when their text holds a PHP opening
+	 * tag and matches $pattern, which is cheaper than many separate words.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @param Context $context Gives the scanner and the location of wp-config.php.
+	 * @param string  $pattern PCRE pattern, with delimiters, that a file's text must match.
+	 * @return self
+	 */
+	public static function matching_pattern( Context $context, string $pattern ): self {
+		$sources          = new self( $context, array( array( '<?' ) ) );
+		$sources->pattern = $pattern;
+
+		return $sources;
 	}
 
 	/**
@@ -253,7 +279,7 @@ final class Php_Sources {
 	}
 
 	/**
-	 * True when the text holds a word from every group.
+	 * True when the text holds a word from every group and matches the pattern, if there is one.
 	 *
 	 * @since 0.2.0
 	 *
@@ -261,6 +287,9 @@ final class Php_Sources {
 	 * @return bool
 	 */
 	private function holds_words( string $source ): bool {
+		if ( null !== $this->pattern && 1 !== preg_match( $this->pattern, $source ) ) {
+			return false;
+		}
 		foreach ( $this->word_groups as $group ) {
 			$found = false;
 			foreach ( $group as $word ) {

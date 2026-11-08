@@ -40,6 +40,7 @@ use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
 use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
 use WP_Doctor\Check\Category\Security\Admin_Users_Check;
 use WP_Doctor\Check\Category\Security\Core_Checksums_Check;
+use WP_Doctor\Check\Category\Security\Cron_Persistence_Check;
 use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
 use WP_Doctor\Check\Category\Security\Obfuscated_Code_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
@@ -106,6 +107,7 @@ final class Check_Registry {
 			new Core_Checksums_Check(),
 			new Cron_Disabled_Check(),
 			new Cron_Duplicates_Check(),
+			new Cron_Persistence_Check(),
 			new Cron_Overdue_Check(),
 			new Db_Version_Check(),
 			new Debug_Enabled_Check(),

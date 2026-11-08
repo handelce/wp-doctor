@@ -14,6 +14,10 @@ minor release may change the command-line options or the JSON report shape.
   reports them. Plugins wordpress.org does not host are listed as not checked.
   This sends each plugin's folder name and version to downloads.wordpress.org;
   `--offline` turns it off.
+- `sec.wpcron.persistence`: scheduled events whose hook is named only by PHP
+  outside any plugin, theme or WordPress core, such as a file in uploads
+  (warning), and events whose hook no installed code names, likely left by a
+  removed plugin (info).
 
 ### Changed
 

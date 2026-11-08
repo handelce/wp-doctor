@@ -116,7 +116,7 @@ final class Unknown_Themes_Check implements Check {
 	 * @param string         $name   Folder name.
 	 * @return string|null
 	 */
-	private function folder_problem( Code_Directory $themes, string $name ): ?string {
+	public function folder_problem( Code_Directory $themes, string $name ): ?string {
 		if ( array() === $themes->php_under( $name ) ) {
 			return null;
 		}
@@ -181,7 +181,7 @@ final class Unknown_Themes_Check implements Check {
 	 * @param File_Info      $entry  The file.
 	 * @return string|null
 	 */
-	private function file_problem( Code_Directory $themes, File_Info $entry ): ?string {
+	public function file_problem( Code_Directory $themes, File_Info $entry ): ?string {
 		if ( ! Code_Directory::is_php( $entry ) || $themes->is_index_stub( $entry ) ) {
 			return null;
 		}
