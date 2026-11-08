@@ -165,7 +165,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 			}
 			$gaps[] = count( $not_compared ) . ' release file(s) were not compared (' . implode( ', ', $reasons ) . ')';
 		}
-		$incomplete = array() !== $gaps;
+		$incomplete = array() !== $gaps || $unreadable > 0 || array() !== $not_compared;
 
 		if ( array() === $modified && array() === $missing && array() === $unknown_core && array() === $unknown_root ) {
 			if ( $unreadable > 0 ) {
@@ -188,7 +188,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 					array(
 						'wordpress_version'  => $version,
 						'locale_used'        => $locale,
-						'files_compared'     => count( $expected ),
+						'files_compared'     => count( $release ) - count( $missing ) - $unreadable - count( $not_compared ),
 						'modified_files'     => count( $modified ),
 						'missing_files'      => count( $missing ),
 						'files_unreadable'   => $unreadable,

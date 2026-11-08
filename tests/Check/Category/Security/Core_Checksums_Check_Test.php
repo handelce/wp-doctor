@@ -10,6 +10,7 @@ use WP_Doctor\Check\Context;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
 use WP_Doctor\Tests\Support\Fake_Checksum_Source;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Core_Checksums_Check_Test extends TestCase {
@@ -132,6 +133,32 @@ final class Core_Checksums_Check_Test extends TestCase {
 		$this->run_check();
 
 		$this->assertSame( array( array( '6.5.2', 'en_US' ) ), $this->source->requests );
+	}
+
+	public function test_only_files_actually_hashed_count_as_compared(): void {
+		$this->tree->file( 'wp-includes/functions.php', '<?php // functions with an injected line' );
+		$this->source->checksums['wp-content/plugins/hello.php'] = md5( 'not compared' );
+		$this->source->checksums['wp-includes/gone.php']         = md5( 'missing' );
+
+		$evidence = $this->run_check()->finding_list()[0]->evidence();
+
+		$this->assertCount( 7, $this->source->checksums );
+		$this->assertSame( 1, $evidence['missing_files'] );
+		$this->assertSame( 5, $evidence['files_compared'] );
+	}
+
+	public function test_an_unreadable_core_file_beside_a_finding_marks_the_scan_incomplete(): void {
+		File_Modes::require_enforced_modes();
+		$this->tree->file( 'wp-includes/functions.php', '<?php // functions with an injected line' );
+		$path = $this->tree->site() . '/wp-login.php';
+		chmod( $path, 0000 );
+
+		$evidence = $this->run_check()->finding_list()[0]->evidence();
+
+		chmod( $path, 0644 );
+		$this->assertSame( 1, $evidence['files_unreadable'] );
+		$this->assertTrue( $evidence['scan_incomplete'] );
+		$this->assertSame( 4, $evidence['files_compared'] );
 	}
 
 	public function test_a_modified_core_file_is_critical_and_named(): void {
