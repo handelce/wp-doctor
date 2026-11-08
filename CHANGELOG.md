@@ -5,6 +5,20 @@ Notable changes to wp-doctor, by release. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0.0, any
 minor release may change the command-line options or the JSON report shape.
 
+## [0.1.1] - 2026-11-08
+
+### Changed
+
+- Windows is supported. Continuous integration runs the test suite on Windows
+  with PHP 8.3, alongside Linux with PHP 7.2 to 8.4. On Windows the
+  `config.perms.wpconfig` and `config.perms.writable` checks skip, since
+  Windows has no Unix file modes. The scanner code is the same as in 0.1.0.
+
+### Fixed
+
+- `composer build` failed on Windows, because the build script compared
+  backslash paths with the slash paths in Composer's class map.
+
 ## [0.1.0] - 2026-11-07
 
 First release.
@@ -46,4 +60,5 @@ First release.
 - For the database checks: MySQL 5.6.5 or MariaDB 10.0 or later.
 - Linux or macOS. Windows is not supported yet.
 
+[0.1.1]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.1
 [0.1.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.0
