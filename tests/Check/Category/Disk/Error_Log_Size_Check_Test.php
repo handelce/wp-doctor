@@ -60,9 +60,9 @@ final class Error_Log_Size_Check_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertSame( 2, $evidence['large_files'] );
-		$this->assertSame( 'wp-content/plugins/example/deep/error_log', $evidence['file_1'] );
-		$this->assertSame( 90 * self::MIB, $evidence['file_1_bytes'] );
-		$this->assertSame( 'wp-admin/error_log', $evidence['file_2'] );
+		$this->assertSame( 'wp-content/plugins/example/deep/error_log', $evidence['files'][0]['path'] );
+		$this->assertSame( 90 * self::MIB, $evidence['files'][0]['bytes'] );
+		$this->assertSame( 'wp-admin/error_log', $evidence['files'][1]['path'] );
 		$this->assertFalse( $evidence['scan_incomplete'] );
 	}
 

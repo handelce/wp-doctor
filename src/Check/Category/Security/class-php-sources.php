@@ -205,15 +205,14 @@ final class Php_Sources {
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		$rank = 0;
+		$evidence['files'] = array();
 		foreach ( array_slice( $found, 0, Evidence::MAX_LISTED, true ) as $path => $hits ) {
-			++$rank;
-			$evidence[ "file_$rank" ]        = (string) $path;
-			$evidence[ "file_{$rank}_line" ] = $hits[0]['line'];
-			$evidence[ "file_{$rank}_code" ] = Code_Sinks::describe( $hits[0] );
-			if ( count( $hits ) > 1 ) {
-				$evidence[ "file_{$rank}_more" ] = count( $hits ) - 1;
-			}
+			$evidence['files'][] = array(
+				'path' => (string) $path,
+				'line' => $hits[0]['line'],
+				'code' => Code_Sinks::describe( $hits[0] ),
+				'more' => count( $hits ) - 1,
+			);
 		}
 
 		return $evidence;

@@ -81,7 +81,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$this->assertArrayHasKey( 'critical', $findings );
 		$this->assertArrayNotHasKey( 'warning', $findings );
-		$this->assertSame( $relative, $findings['critical']->evidence()['file_1'] );
+		$this->assertSame( $relative, $findings['critical']->evidence()['files'][0]['path'] );
 		$this->assertStringContainsString( 'likely', $findings['critical']->title() );
 	}
 
@@ -117,7 +117,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$this->assertArrayHasKey( 'warning', $findings );
 		$this->assertArrayNotHasKey( 'critical', $findings );
-		$this->assertSame( $relative, $findings['warning']->evidence()['file_1'] );
+		$this->assertSame( $relative, $findings['warning']->evidence()['files'][0]['path'] );
 	}
 
 	/**
@@ -149,8 +149,8 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$this->assertSame( 2, $findings['critical']->evidence()['matching_files'] );
 		$this->assertSame( 1, $findings['warning']->evidence()['matching_files'] );
-		$this->assertSame( 'a.sql', $findings['critical']->evidence()['file_1'] );
-		$this->assertSame( 'b.sql', $findings['critical']->evidence()['file_2'] );
+		$this->assertSame( 'a.sql', $findings['critical']->evidence()['files'][0]['path'] );
+		$this->assertSame( 'b.sql', $findings['critical']->evidence()['files'][1]['path'] );
 		$this->assertNotSame( '', $findings['critical']->fix() );
 	}
 
@@ -172,7 +172,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$warning = $this->by_severity( $this->run_check() )['warning'];
 
-		$this->assertSame( 'site.zip', $warning->evidence()['file_1'] );
+		$this->assertSame( 'site.zip', $warning->evidence()['files'][0]['path'] );
 		$this->assertArrayNotHasKey( 'archives_in_code_folders', $warning->evidence() );
 	}
 
@@ -182,7 +182,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$result = $this->run_check( "define( 'UPLOADS', 'media' );" );
 
-		$this->assertSame( 'wp-content/uploads/old.zip', $this->by_severity( $result )['warning']->evidence()['file_1'] );
+		$this->assertSame( 'wp-content/uploads/old.zip', $this->by_severity( $result )['warning']->evidence()['files'][0]['path'] );
 		$this->assertSame( 1, $this->by_severity( $result )['warning']->evidence()['matching_files'] );
 	}
 
@@ -254,7 +254,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$evidence = $this->by_severity( $this->run_check() )['critical']->evidence();
 
-		$this->assertSame( 'wp-content/plugins/example/export.sql', $evidence['file_1'] );
+		$this->assertSame( 'wp-content/plugins/example/export.sql', $evidence['files'][0]['path'] );
 	}
 
 	/**
@@ -266,7 +266,7 @@ final class Leftover_Files_Check_Test extends TestCase {
 
 		$evidence = $this->by_severity( $this->run_check() )['warning']->evidence();
 
-		$this->assertSame( $relative, $evidence['file_1'] );
+		$this->assertSame( $relative, $evidence['files'][0]['path'] );
 	}
 
 	/**

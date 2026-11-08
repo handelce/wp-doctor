@@ -87,9 +87,9 @@ final class Cron_Overdue_Check_Test extends TestCase {
 		$this->assertSame( 3, $evidence['overdue_events'] );
 		$this->assertSame( 4, $evidence['scheduled_events'] );
 		$this->assertSame( 90000, $evidence['oldest_overdue_seconds'] );
-		$this->assertSame( 'example_late', $evidence['hook_1'] );
-		$this->assertSame( 2, $evidence['hook_1_overdue'] );
-		$this->assertSame( 'example_other', $evidence['hook_2'] );
+		$this->assertSame( 'example_late', $evidence['hooks'][0]['hook'] );
+		$this->assertSame( 2, $evidence['hooks'][0]['overdue'] );
+		$this->assertSame( 'example_other', $evidence['hooks'][1]['hook'] );
 		$this->assertArrayNotHasKey( 'hook_3', $evidence );
 		$this->assertNotSame( '', $finding->fix() );
 	}
@@ -115,7 +115,7 @@ final class Cron_Overdue_Check_Test extends TestCase {
 
 		$this->assertStringNotContainsString( 'damaged', $finding->title() );
 		$this->assertSame( 1, $finding->evidence()['overdue_events'] );
-		$this->assertSame( 'example_publish_post', $finding->evidence()['hook_1'] );
+		$this->assertSame( 'example_publish_post', $finding->evidence()['hooks'][0]['hook'] );
 	}
 
 	public function test_a_site_that_disables_wp_cron_says_so(): void {
@@ -181,7 +181,7 @@ final class Cron_Overdue_Check_Test extends TestCase {
 		$evidence = $this->run_with_option( $this->cron_option( $events ) )->finding_list()[0]->evidence();
 
 		$this->assertSame( 12, $evidence['overdue_events'] );
-		$this->assertSame( 'example_hook_10', $evidence['hook_10'] );
+		$this->assertSame( 'example_hook_10', $evidence['hooks'][9]['hook'] );
 		$this->assertArrayNotHasKey( 'hook_11', $evidence );
 	}
 

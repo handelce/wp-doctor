@@ -83,13 +83,11 @@ final class Writable_Files_Check implements Runs_Without_Config {
 				$this->id(),
 				Severity::warning(),
 				'Files or directories can be written by anyone',
-				array_merge(
-					array(
-						'world_writable_files'       => count( $writable ) - $dirs,
-						'world_writable_directories' => $dirs,
-						'scan_incomplete'            => null !== $gap,
-					),
-					Evidence::files( Evidence::by_path( $writable ) )
+				array(
+					'world_writable_files'       => count( $writable ) - $dirs,
+					'world_writable_directories' => $dirs,
+					'scan_incomplete'            => null !== $gap,
+					'files'                      => Evidence::files( Evidence::by_path( $writable ) ),
 				),
 				'Run `find . -type f -perm -o+w -exec chmod o-w {} +` and the same with `-type d` from the site root, then check the '
 				. 'site still works. Files are normally 644 and directories 755.'

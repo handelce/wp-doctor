@@ -133,11 +133,13 @@ final class Cron_Duplicates_Check implements Check {
 			}
 		);
 
-		$evidence = array();
-		foreach ( array_slice( $hooks, 0, self::MAX_HOOKS_LISTED ) as $index => $hook ) {
-			$rank                              = $index + 1;
-			$evidence[ "hook_$rank" ]          = $hook;
-			$evidence[ "hook_{$rank}_copies" ] = $worst[ $hook ];
+		$evidence          = array();
+		$evidence['hooks'] = array();
+		foreach ( array_slice( $hooks, 0, self::MAX_HOOKS_LISTED ) as $hook ) {
+			$evidence['hooks'][] = array(
+				'hook'   => $hook,
+				'copies' => $worst[ $hook ],
+			);
 		}
 		$evidence['scheduled_events']      = $total;
 		$evidence['cron_option_bytes']     = $bytes;

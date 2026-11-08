@@ -98,8 +98,8 @@ final class Cron_Persistence_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$this->assertSame( 2, $evidence['hooks_scheduled'] );
 		$this->assertSame( 1, $evidence['hooks_not_named'] );
-		$this->assertSame( 'removed_plugin_sync', $evidence['hook_1'] );
-		$this->assertSame( 1, $evidence['hook_1_events'] );
+		$this->assertSame( 'removed_plugin_sync', $evidence['hooks'][0]['hook'] );
+		$this->assertSame( 1, $evidence['hooks'][0]['events'] );
 		$this->assertStringContainsString( 'wp cron event delete <hook>', $finding->fix() );
 	}
 
@@ -108,7 +108,7 @@ final class Cron_Persistence_Check_Test extends TestCase {
 
 		$evidence = $this->finding( $this->run_with( array( 'rm_job_1' ) ), 'info' )->evidence();
 
-		$this->assertSame( 'rm_job_1', $evidence['hook_1'] );
+		$this->assertSame( 'rm_job_1', $evidence['hooks'][0]['hook'] );
 	}
 
 	public function test_a_hook_named_only_outside_installed_code_is_a_likely_warning_naming_the_file(): void {
@@ -118,9 +118,9 @@ final class Cron_Persistence_Check_Test extends TestCase {
 
 		$evidence = $finding->evidence();
 		$this->assertStringContainsString( 'likely', $finding->title() );
-		$this->assertSame( 1, $evidence['hooks'] );
-		$this->assertSame( 'wp_cache_refresh_x', $evidence['hook_1'] );
-		$this->assertSame( 'wp-content/uploads/2026/11/cache.php', $evidence['hook_1_named_in'] );
+		$this->assertSame( 1, $evidence['hooks_flagged'] );
+		$this->assertSame( 'wp_cache_refresh_x', $evidence['hooks'][0]['hook'] );
+		$this->assertSame( 'wp-content/uploads/2026/11/cache.php', $evidence['hooks'][0]['named_in'] );
 		$this->assertStringContainsString( 'treat the site as compromised', $finding->fix() );
 	}
 
@@ -129,7 +129,7 @@ final class Cron_Persistence_Check_Test extends TestCase {
 
 		$evidence = $this->finding( $this->run_with( array( 'wp_zxq_beacon' ) ), 'warning' )->evidence();
 
-		$this->assertSame( self::PLUGINS . '/wp-zxq/up.php', $evidence['hook_1_named_in'] );
+		$this->assertSame( self::PLUGINS . '/wp-zxq/up.php', $evidence['hooks'][0]['named_in'] );
 	}
 
 	/**

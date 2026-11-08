@@ -61,12 +61,20 @@ final class Autoload_Top_Check_Test extends TestCase {
 		$this->assertSame( 'perf.autoload.top', $findings[0]->id() );
 		$this->assertSame(
 			array(
-				'option_1'       => 'example_big',
-				'option_1_bytes' => 900000,
-				'option_2'       => 'example_medium',
-				'option_2_bytes' => 40000,
-				'option_3'       => 'siteurl',
-				'option_3_bytes' => 20,
+				'options' => array(
+					array(
+						'name'  => 'example_big',
+						'bytes' => 900000,
+					),
+					array(
+						'name'  => 'example_medium',
+						'bytes' => 40000,
+					),
+					array(
+						'name'  => 'siteurl',
+						'bytes' => 20,
+					),
+				),
 			),
 			$findings[0]->evidence()
 		);
@@ -87,7 +95,7 @@ final class Autoload_Top_Check_Test extends TestCase {
 	public function test_an_option_named_like_a_number_is_listed_as_a_value(): void {
 		list( $result ) = $this->run_with_rows( array( $this->row( '2026', '500' ) ) );
 
-		$this->assertSame( '2026', $result->finding_list()[0]->evidence()['option_1'] );
+		$this->assertSame( '2026', $result->finding_list()[0]->evidence()['options'][0]['name'] );
 	}
 
 	public function test_no_autoloaded_rows_is_skipped_not_passed(): void {

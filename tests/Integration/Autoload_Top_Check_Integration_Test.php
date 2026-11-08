@@ -42,10 +42,16 @@ final class Autoload_Top_Check_Integration_Test extends TestCase {
 	public function test_the_heavy_seed_lists_autoloaded_options_largest_first_and_leaves_out_the_others(): void {
 		$this->assertSame(
 			array(
-				'option_1'       => 'example_plugin_blob',
-				'option_1_bytes' => 1500000,
-				'option_2'       => 'siteurl',
-				'option_2_bytes' => 20,
+				'options' => array(
+					array(
+						'name'  => 'example_plugin_blob',
+						'bytes' => 1500000,
+					),
+					array(
+						'name'  => 'siteurl',
+						'bytes' => 20,
+					),
+				),
 			),
 			$this->evidence_from( 'options-heavy-autoload.sql' )
 		);
@@ -54,10 +60,16 @@ final class Autoload_Top_Check_Integration_Test extends TestCase {
 	public function test_the_light_seed_lists_only_the_autoloaded_options(): void {
 		$this->assertSame(
 			array(
-				'option_1'       => 'siteurl',
-				'option_1_bytes' => 20,
-				'option_2'       => 'blogname',
-				'option_2_bytes' => 7,
+				'options' => array(
+					array(
+						'name'  => 'siteurl',
+						'bytes' => 20,
+					),
+					array(
+						'name'  => 'blogname',
+						'bytes' => 7,
+					),
+				),
 			),
 			$this->evidence_from( 'options-light-autoload.sql' )
 		);

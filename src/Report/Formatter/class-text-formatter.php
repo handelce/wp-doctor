@@ -132,13 +132,46 @@ final class Text_Formatter implements Formatter {
 		$lines = array( '  [' . esc_cli( $finding->id() ) . '] ' . esc_cli( $finding->title() ) );
 
 		foreach ( $finding->evidence() as $key => $value ) {
-			$lines[] = '    ' . esc_cli( (string) $key ) . ': ' . $this->scalar( $value );
+			$lines = array_merge( $lines, $this->evidence_lines( (string) $key, $value ) );
 		}
 
 		$fix_lines = explode( "\n", esc_cli( $finding->fix(), true ) );
 		$lines[]   = '    Fix: ' . array_shift( $fix_lines );
 		foreach ( $fix_lines as $fix_line ) {
 			$lines[] = '    ' . $fix_line;
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * Lines for one evidence entry. A list puts each item on a line of its
+	 * own, and an object in a list puts each field on a line of its own.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $key   Evidence key.
+	 * @param mixed  $value Scalar, or list of scalars or of objects of scalars.
+	 * @return string[]
+	 */
+	private function evidence_lines( string $key, $value ): array {
+		if ( ! is_array( $value ) ) {
+			return array( '    ' . esc_cli( $key ) . ': ' . $this->scalar( $value ) );
+		}
+		if ( array() === $value ) {
+			return array( '    ' . esc_cli( $key ) . ': none' );
+		}
+		$lines = array( '    ' . esc_cli( $key ) . ':' );
+		foreach ( $value as $item ) {
+			if ( ! is_array( $item ) ) {
+				$lines[] = '      - ' . $this->scalar( $item );
+				continue;
+			}
+			$marker = '      - ';
+			foreach ( $item as $field => $field_value ) {
+				$lines[] = $marker . esc_cli( (string) $field ) . ': ' . $this->scalar( $field_value );
+				$marker  = '        ';
+			}
 		}
 
 		return $lines;

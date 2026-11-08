@@ -102,9 +102,9 @@ final class Revisions_Count_Check_Test extends TestCase {
 		$this->assertSame( 2, $evidence['posts_with_revisions'] );
 		$this->assertSame( 10000, $evidence['warning_above_rows'] );
 		$this->assertSame( 'not set, so every revision is kept', $evidence['WP_POST_REVISIONS'] );
-		$this->assertSame( 42, $evidence['post_1'] );
-		$this->assertSame( 900, $evidence['post_1_revisions'] );
-		$this->assertSame( 7, $evidence['post_2'] );
+		$this->assertSame( 42, $evidence['posts'][0]['id'] );
+		$this->assertSame( 900, $evidence['posts'][0]['revisions'] );
+		$this->assertSame( 7, $evidence['posts'][1]['id'] );
 		$this->assertStringContainsString( "define( 'WP_POST_REVISIONS', 10 );", $finding->fix() );
 	}
 

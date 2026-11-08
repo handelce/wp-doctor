@@ -120,10 +120,10 @@ final class Cron_Duplicates_Check_Test extends TestCase {
 		list( $result ) = $this->run_with_option( $value );
 
 		$evidence = $result->finding_list()[0]->evidence();
-		$this->assertSame( 'example_large', $evidence['hook_1'] );
-		$this->assertSame( 90, $evidence['hook_1_copies'] );
-		$this->assertSame( 'example_small', $evidence['hook_2'] );
-		$this->assertSame( 60, $evidence['hook_2_copies'] );
+		$this->assertSame( 'example_large', $evidence['hooks'][0]['hook'] );
+		$this->assertSame( 90, $evidence['hooks'][0]['copies'] );
+		$this->assertSame( 'example_small', $evidence['hooks'][1]['hook'] );
+		$this->assertSame( 60, $evidence['hooks'][1]['copies'] );
 		$this->assertArrayNotHasKey( 'hook_3', $evidence );
 		$this->assertSame( 155, $evidence['scheduled_events'] );
 		$this->assertSame( strlen( $value ), $evidence['cron_option_bytes'] );
@@ -140,7 +140,7 @@ final class Cron_Duplicates_Check_Test extends TestCase {
 		list( $result ) = $this->run_with_option( $this->cron_option( $events ) );
 
 		$evidence = $result->finding_list()[0]->evidence();
-		$this->assertSame( 'example_hook_10', $evidence['hook_10'] );
+		$this->assertSame( 'example_hook_10', $evidence['hooks'][9]['hook'] );
 		$this->assertArrayNotHasKey( 'hook_11', $evidence );
 		$this->assertSame( 720, $evidence['scheduled_events'] );
 	}
@@ -157,7 +157,7 @@ final class Cron_Duplicates_Check_Test extends TestCase {
 	public function test_a_hook_named_like_a_number_is_reported_as_a_string(): void {
 		list( $result ) = $this->run_with_option( $this->cron_option( $this->copies( '12345', 60 ) ) );
 
-		$this->assertSame( '12345', $result->finding_list()[0]->evidence()['hook_1'] );
+		$this->assertSame( '12345', $result->finding_list()[0]->evidence()['hooks'][0]['hook'] );
 	}
 
 	public function test_a_missing_cron_option_is_skipped_not_passed(): void {
@@ -204,7 +204,7 @@ final class Cron_Duplicates_Check_Test extends TestCase {
 
 		$this->assertSame( Result::FINDINGS, $result->status() );
 		$evidence = $result->finding_list()[0]->evidence();
-		$this->assertSame( 'example_looping_hook', $evidence['hook_1'] );
+		$this->assertSame( 'example_looping_hook', $evidence['hooks'][0]['hook'] );
 		$this->assertSame( 69000, $evidence['scheduled_events'] );
 		$this->assertLessThan( 3.0, $elapsed, sprintf( 'Took %.1f seconds', $elapsed ) );
 	}

@@ -51,7 +51,7 @@ final class Uploads_Size_Check_Test extends TestCase {
 		$this->assertArrayNotHasKey( 'location_unconfirmed', $evidence );
 		$this->assertSame(
 			array( self::UPLOADS . '/elementor', 800, self::UPLOADS . '/2025', 500, self::UPLOADS . '/2026', 100, self::UPLOADS . '/index.php', 5 ),
-			array( $evidence['largest_1'], $evidence['largest_1_bytes'], $evidence['largest_2'], $evidence['largest_2_bytes'], $evidence['largest_3'], $evidence['largest_3_bytes'], $evidence['largest_4'], $evidence['largest_4_bytes'] )
+			array( $evidence['largest'][0]['path'], $evidence['largest'][0]['bytes'], $evidence['largest'][1]['path'], $evidence['largest'][1]['bytes'], $evidence['largest'][2]['path'], $evidence['largest'][2]['bytes'], $evidence['largest'][3]['path'], $evidence['largest'][3]['bytes'] )
 		);
 	}
 

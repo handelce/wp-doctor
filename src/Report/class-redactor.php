@@ -333,14 +333,23 @@ final class Redactor {
 	}
 
 	/**
-	 * Masks an evidence value. A number is masked only when it equals a secret exactly.
+	 * Masks an evidence value, and each item and field of a list. A number is
+	 * masked only when it equals a secret exactly.
 	 *
 	 * @since 0.1.0
 	 *
-	 * @param string|int|float|bool $value Evidence value.
-	 * @return string|int|float|bool
+	 * @param mixed $value Evidence value: a scalar, or a list of scalars or of objects of scalars.
+	 * @return mixed
 	 */
 	private function redact_value( $value ) {
+		if ( is_array( $value ) ) {
+			$redacted = array();
+			foreach ( $value as $key => $item ) {
+				$redacted[ $key ] = $this->redact_value( $item );
+			}
+
+			return $redacted;
+		}
 		if ( is_string( $value ) ) {
 			return $this->redact_text( $value );
 		}

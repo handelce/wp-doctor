@@ -331,16 +331,20 @@ final class Plugin_Checksums_Check implements Check {
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		foreach ( array_slice( $found, 0, Evidence::MAX_LISTED ) as $index => $row ) {
-			$rank                               = $index + 1;
-			$evidence[ "file_$rank" ]           = "$directory/{$row[0]}";
-			$evidence[ "file_{$rank}_plugin" ]  = $row[1];
-			$evidence[ "file_{$rank}_problem" ] = $row[2];
+		$evidence['files'] = array();
+		foreach ( array_slice( $found, 0, Evidence::MAX_LISTED ) as $row ) {
+			$evidence['files'][] = array(
+				'path'    => "$directory/{$row[0]}",
+				'plugin'  => $row[1],
+				'problem' => $row[2],
+			);
 		}
-		$rank = 0;
+		$evidence['not_checked'] = array();
 		foreach ( array_slice( $unchecked, 0, Evidence::MAX_LISTED, true ) as $name => $reason ) {
-			++$rank;
-			$evidence[ "not_checked_$rank" ] = "$name: $reason";
+			$evidence['not_checked'][] = array(
+				'plugin' => (string) $name,
+				'reason' => $reason,
+			);
 		}
 
 		return $evidence;

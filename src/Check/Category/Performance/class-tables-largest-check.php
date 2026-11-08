@@ -68,12 +68,14 @@ final class Tables_Largest_Check implements Check {
 			return Result::skipped( esc_cli( 'No tables start with the prefix ' . $context->config()->table_prefix() . '; the prefix or database may be wrong' ) );
 		}
 
-		$count    = count( $tables );
-		$evidence = array( 'tables_with_prefix' => $count < Table_Sizes::LIMIT ? $count : 'at least ' . $count . '; only the largest ' . Table_Sizes::LIMIT . ' were read' );
-		foreach ( array_slice( $tables, 0, self::LISTED ) as $index => $table ) {
-			$rank                              = $index + 1;
-			$evidence[ "table_$rank" ]         = $table['name'];
-			$evidence[ "table_{$rank}_bytes" ] = $table['bytes'];
+		$count              = count( $tables );
+		$evidence           = array( 'tables_with_prefix' => $count < Table_Sizes::LIMIT ? $count : 'at least ' . $count . '; only the largest ' . Table_Sizes::LIMIT . ' were read' );
+		$evidence['tables'] = array();
+		foreach ( array_slice( $tables, 0, self::LISTED ) as $table ) {
+			$evidence['tables'][] = array(
+				'name'  => $table['name'],
+				'bytes' => $table['bytes'],
+			);
 		}
 
 		return Result::findings(

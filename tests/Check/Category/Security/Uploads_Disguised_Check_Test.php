@@ -76,8 +76,8 @@ final class Uploads_Disguised_Check_Test extends TestCase {
 		$finding = $this->run_check()->finding_list()[0];
 
 		$this->assertSame( 'critical', $finding->severity()->name() );
-		$this->assertSame( 'wp-content/uploads/' . $name, $finding->evidence()['file_1'] );
-		$this->assertStringContainsString( 'extension', (string) $finding->evidence()['file_1_why'] );
+		$this->assertSame( 'wp-content/uploads/' . $name, $finding->evidence()['files'][0]['path'] );
+		$this->assertStringContainsString( 'extension', (string) $finding->evidence()['files'][0]['why'] );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 	}
 
@@ -109,7 +109,7 @@ final class Uploads_Disguised_Check_Test extends TestCase {
 		$finding = $this->run_check()->finding_list()[0];
 
 		$this->assertSame( 'critical', $finding->severity()->name() );
-		$this->assertStringContainsString( 'open tag', (string) $finding->evidence()['file_1_why'] );
+		$this->assertStringContainsString( 'open tag', (string) $finding->evidence()['files'][0]['why'] );
 		$this->assertSame( 1, $finding->evidence()['image_files_examined'] );
 	}
 
@@ -170,7 +170,7 @@ final class Uploads_Disguised_Check_Test extends TestCase {
 	public function test_a_file_with_both_signs_names_both_reasons(): void {
 		$this->tree->file( 'wp-content/uploads/x.php.jpg', '<?php // inert test marker' );
 
-		$why = (string) $this->run_check()->finding_list()[0]->evidence()['file_1_why'];
+		$why = (string) $this->run_check()->finding_list()[0]->evidence()['files'][0]['why'];
 
 		$this->assertStringContainsString( 'extension', $why );
 		$this->assertStringContainsString( 'open tag', $why );

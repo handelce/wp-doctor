@@ -111,14 +111,16 @@ final class Recent_Changes_Check implements Check {
 		if ( null !== $gap ) {
 			$evidence['not_examined'] = $gap;
 		}
-		foreach ( array_slice( $flagged, 0, Evidence::MAX_LISTED ) as $index => $row ) {
-			$rank                                     = $index + 1;
-			$evidence[ "file_$rank" ]                 = $row['file']->path();
-			$evidence[ "file_{$rank}_written" ]       = gmdate( 'Y-m-d H:i', $row['file']->ctime() ) . ' UTC';
-			$evidence[ "file_{$rank}_modified" ]      = gmdate( 'Y-m-d H:i', $row['file']->mtime() ) . ' UTC';
-			$evidence[ "file_{$rank}_package" ]       = $row['package'];
-			$evidence[ "file_{$rank}_package_files" ] = $row['package_files'];
-			$evidence[ "file_{$rank}_written_with" ]  = $row['written_with'];
+		$evidence['files'] = array();
+		foreach ( array_slice( $flagged, 0, Evidence::MAX_LISTED ) as $row ) {
+			$evidence['files'][] = array(
+				'path'          => $row['file']->path(),
+				'written'       => gmdate( 'Y-m-d H:i', $row['file']->ctime() ) . ' UTC',
+				'modified'      => gmdate( 'Y-m-d H:i', $row['file']->mtime() ) . ' UTC',
+				'package'       => $row['package'],
+				'package_files' => $row['package_files'],
+				'written_with'  => $row['written_with'],
+			);
 		}
 
 		return Result::findings(

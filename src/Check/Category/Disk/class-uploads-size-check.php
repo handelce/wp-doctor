@@ -69,8 +69,18 @@ final class Uploads_Size_Check implements Check {
 			return Result::skipped( $e->getMessage() );
 		}
 
-		$evidence = array_merge( array( 'scan_incomplete' => null !== $size->gap() ), $size->evidence( '', self::LISTED ) );
-		$location = $context->uploads_dir_unconfirmed();
+		$summary  = $size->summary();
+		$evidence = array(
+			'scan_incomplete' => null !== $size->gap(),
+			'directory'       => $summary['path'],
+			'bytes'           => $summary['bytes'],
+			'files'           => $summary['files'],
+		);
+		if ( null !== $size->gap() ) {
+			$evidence['not_counted'] = $size->gap();
+		}
+		$evidence['largest'] = $size->largest( self::LISTED );
+		$location            = $context->uploads_dir_unconfirmed();
 		if ( null !== $location ) {
 			$evidence['location_unconfirmed'] = $location;
 		}

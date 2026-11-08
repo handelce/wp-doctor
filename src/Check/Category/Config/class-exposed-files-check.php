@@ -138,24 +138,24 @@ final class Exposed_Files_Check implements Runs_Without_Config {
 	}
 
 	/**
-	 * Numbered path and reason pairs.
+	 * Each path with its reason, sorted by path.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param array<string, string> $found Reason by path.
-	 * @return array<string, string>
+	 * @return array<string, array<int, array{path: string, reason: string}>>
 	 */
 	private function evidence( array $found ): array {
-		$evidence = array();
-		$rank     = 0;
+		$paths = array();
 		ksort( $found );
 		foreach ( $found as $path => $reason ) {
-			++$rank;
-			$evidence[ "path_$rank" ]          = (string) $path;
-			$evidence[ "path_{$rank}_reason" ] = $reason;
+			$paths[] = array(
+				'path'   => (string) $path,
+				'reason' => $reason,
+			);
 		}
 
-		return $evidence;
+		return array( 'paths' => $paths );
 	}
 
 	/**

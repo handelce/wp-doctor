@@ -130,17 +130,19 @@ final class Cron_Overdue_Check implements Check {
 			}
 		);
 
-		$evidence = array(
+		$evidence          = array(
 			'overdue_events'         => $overdue,
 			'scheduled_events'       => $total,
 			'oldest_overdue_seconds' => $now - $oldest,
 			'overdue_after_seconds'  => $after,
 			'threshold_basis'        => $context->thresholds()->basis( $this->id() ),
 		);
-		foreach ( array_slice( $hooks, 0, self::MAX_HOOKS_LISTED ) as $index => $hook ) {
-			$rank                               = $index + 1;
-			$evidence[ "hook_$rank" ]           = $hook;
-			$evidence[ "hook_{$rank}_overdue" ] = $by_hook[ $hook ];
+		$evidence['hooks'] = array();
+		foreach ( array_slice( $hooks, 0, self::MAX_HOOKS_LISTED ) as $hook ) {
+			$evidence['hooks'][] = array(
+				'hook'    => $hook,
+				'overdue' => $by_hook[ $hook ],
+			);
 		}
 		$config = $context->config();
 		if ( $config->has( 'DISABLE_WP_CRON' ) ) {

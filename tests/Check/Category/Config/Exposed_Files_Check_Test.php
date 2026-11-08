@@ -77,7 +77,7 @@ final class Exposed_Files_Check_Test extends TestCase {
 		$findings = $this->by_severity( $this->run_check() );
 
 		$this->assertSame( 'warning', $findings['warning']->severity()->name() );
-		$this->assertSame( explode( '/', $relative )[0], $findings['warning']->evidence()['path_1'] );
+		$this->assertSame( explode( '/', $relative )[0], $findings['warning']->evidence()['paths'][0]['path'] );
 		$this->assertStringContainsString( 'likely', $findings['warning']->title() );
 		$this->assertNotSame( '', $findings['warning']->fix() );
 	}
@@ -109,7 +109,7 @@ final class Exposed_Files_Check_Test extends TestCase {
 
 		$this->assertArrayHasKey( 'info', $findings );
 		$this->assertArrayNotHasKey( 'warning', $findings );
-		$this->assertSame( 'readme.html', $findings['info']->evidence()['path_1'] );
+		$this->assertSame( 'readme.html', $findings['info']->evidence()['paths'][0]['path'] );
 	}
 
 	public function test_both_kinds_become_two_findings_with_paths_in_name_order(): void {
@@ -119,8 +119,8 @@ final class Exposed_Files_Check_Test extends TestCase {
 
 		$findings = $this->by_severity( $this->run_check() );
 
-		$this->assertSame( '.env', $findings['warning']->evidence()['path_1'] );
-		$this->assertSame( '.git', $findings['warning']->evidence()['path_2'] );
+		$this->assertSame( '.env', $findings['warning']->evidence()['paths'][0]['path'] );
+		$this->assertSame( '.git', $findings['warning']->evidence()['paths'][1]['path'] );
 		$this->assertArrayHasKey( 'info', $findings );
 	}
 
@@ -152,7 +152,7 @@ final class Exposed_Files_Check_Test extends TestCase {
 		$findings = $this->by_severity( $this->run_check() );
 
 		$this->assertArrayHasKey( 'warning', $findings );
-		$this->assertSame( '.env', $findings['warning']->evidence()['path_1'] );
+		$this->assertSame( '.env', $findings['warning']->evidence()['paths'][0]['path'] );
 	}
 
 	public function test_with_core_in_a_subdirectory_the_top_of_the_core_directory_is_read_too(): void {
@@ -165,9 +165,9 @@ final class Exposed_Files_Check_Test extends TestCase {
 
 		$findings = $this->by_severity( ( new Exposed_Files_Check() )->run( $context ) );
 
-		$this->assertSame( '.env', $findings['warning']->evidence()['path_1'] );
-		$this->assertSame( 'wp/info.php', $findings['warning']->evidence()['path_2'] );
+		$this->assertSame( '.env', $findings['warning']->evidence()['paths'][0]['path'] );
+		$this->assertSame( 'wp/info.php', $findings['warning']->evidence()['paths'][1]['path'] );
 		$this->assertArrayNotHasKey( 'path_3', $findings['warning']->evidence() );
-		$this->assertSame( 'wp/readme.html', $findings['info']->evidence()['path_1'] );
+		$this->assertSame( 'wp/readme.html', $findings['info']->evidence()['paths'][0]['path'] );
 	}
 }

@@ -73,9 +73,9 @@ final class Inactive_Plugins_Check_Test extends TestCase {
 		$result = $this->run_with_active( serialize( array( 'akismet/akismet.php' ) ) );
 
 		$evidence = $result->finding_list()[0]->evidence();
-		$this->assertContains( 'gone', $evidence );
-		$this->assertNotContains( '.git', $evidence );
-		$this->assertNotContains( '.hidden.php', $evidence );
+		$this->assertContains( 'gone', $evidence['plugins'] );
+		$this->assertNotContains( '.git', $evidence['plugins'] );
+		$this->assertNotContains( '.hidden.php', $evidence['plugins'] );
 	}
 
 	public function test_plugins_on_disk_that_are_not_active_are_listed_by_name(): void {
@@ -92,9 +92,9 @@ final class Inactive_Plugins_Check_Test extends TestCase {
 		$this->assertSame( 'info', $finding->severity()->name() );
 		$this->assertSame( 4, $evidence['plugins_on_disk'] );
 		$this->assertSame( 3, $evidence['inactive'] );
-		$this->assertSame( 'another', $evidence['plugin_1'] );
-		$this->assertSame( 'hello.php', $evidence['plugin_2'] );
-		$this->assertSame( 'old-plugin', $evidence['plugin_3'] );
+		$this->assertSame( 'another', $evidence['plugins'][0] );
+		$this->assertSame( 'hello.php', $evidence['plugins'][1] );
+		$this->assertSame( 'old-plugin', $evidence['plugins'][2] );
 		$this->assertNotSame( '', $finding->fix() );
 	}
 
@@ -170,7 +170,7 @@ final class Inactive_Plugins_Check_Test extends TestCase {
 
 		$result = $this->run_with_active( serialize( array() ), "define( 'MULTISITE', false );" );
 
-		$this->assertSame( 'akismet', $result->finding_list()[0]->evidence()['plugin_1'] );
+		$this->assertSame( 'akismet', $result->finding_list()[0]->evidence()['plugins'][0] );
 	}
 
 	public function test_symlinked_plugin_folders_are_listed_by_name_without_being_followed(): void {
@@ -183,8 +183,8 @@ final class Inactive_Plugins_Check_Test extends TestCase {
 		$evidence = $this->run_with_active( serialize( array( 'akismet/akismet.php' ) ) )->finding_list()[0]->evidence();
 
 		$this->assertSame( 3, $evidence['plugins_on_disk'] );
-		$this->assertSame( 'inside-plugin', $evidence['plugin_1'] );
-		$this->assertSame( 'outside-plugin', $evidence['plugin_2'] );
+		$this->assertSame( 'inside-plugin', $evidence['plugins'][0] );
+		$this->assertSame( 'outside-plugin', $evidence['plugins'][1] );
 	}
 
 	public function test_a_plugins_directory_that_could_not_be_listed_is_skipped_rather_than_passed(): void {

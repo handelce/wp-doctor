@@ -105,7 +105,7 @@ final class Tables_Engine_Check implements Check {
 						'tables_with_prefix' => count( $rows ),
 						'myisam_tables'      => count( $myisam ),
 					),
-					Evidence::names( 'table', $myisam )
+					array( 'tables' => Evidence::listed( $myisam ) )
 				),
 				'Take a database backup, then convert each table to InnoDB, for example '
 				. '`wp db query "ALTER TABLE ' . $myisam[0] . ' ENGINE=InnoDB"`. Converting a large table rewrites it and '

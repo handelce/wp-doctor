@@ -129,11 +129,13 @@ final class Uploads_Disguised_Check implements Check {
 		if ( null !== $unconfirmed ) {
 			$evidence['uploads_location_unconfirmed'] = $unconfirmed;
 		}
-		foreach ( array_slice( Evidence::by_path( $found ), 0, Evidence::MAX_LISTED ) as $index => $entry ) {
-			$rank                             = $index + 1;
-			$evidence[ "file_$rank" ]         = $entry->path();
-			$evidence[ "file_{$rank}_bytes" ] = $entry->size();
-			$evidence[ "file_{$rank}_why" ]   = $reasons[ $entry->path() ];
+		$evidence['files'] = array();
+		foreach ( array_slice( Evidence::by_path( $found ), 0, Evidence::MAX_LISTED ) as $entry ) {
+			$evidence['files'][] = array(
+				'path'  => $entry->path(),
+				'bytes' => $entry->size(),
+				'why'   => $reasons[ $entry->path() ],
+			);
 		}
 
 		return Result::findings(

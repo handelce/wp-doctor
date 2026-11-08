@@ -58,8 +58,8 @@ final class Unknown_Plugins_Check_Test extends TestCase {
 		$this->assertCount( 1, $findings );
 		$evidence = $findings[0]->evidence();
 		$flagged  = array();
-		for ( $rank = 1; isset( $evidence[ "entry_$rank" ] ); $rank++ ) {
-			$flagged[ $evidence[ "entry_$rank" ] ] = $evidence[ "entry_{$rank}_reason" ];
+		foreach ( $evidence['entries'] as $entry ) {
+			$flagged[ $entry['path'] ] = $entry['reason'];
 		}
 		$this->assertSame( $evidence['flagged'], count( $flagged ) );
 
@@ -90,10 +90,10 @@ final class Unknown_Plugins_Check_Test extends TestCase {
 		$this->assertSame( self::PLUGINS, $evidence['directory'] );
 		$this->assertSame( 5, $evidence['entries_listed'] );
 		$this->assertFalse( $evidence['scan_incomplete'] );
-		$this->assertSame( self::PLUGINS . '/wp-zxq', $evidence['entry_1'] );
-		$this->assertSame( 'folder with PHP but no file with a Plugin Name header', $evidence['entry_1_reason'] );
-		$this->assertSame( 1, $evidence['entry_1_php_files'] );
-		$this->assertRegExp( '/^\d{4}-\d\d-\d\d \d\d:\d\d UTC$/', $evidence['entry_1_php_newest'] );
+		$this->assertSame( self::PLUGINS . '/wp-zxq', $evidence['entries'][0]['path'] );
+		$this->assertSame( 'folder with PHP but no file with a Plugin Name header', $evidence['entries'][0]['reason'] );
+		$this->assertSame( 1, $evidence['entries'][0]['php_files'] );
+		$this->assertRegExp( '/^\d{4}-\d\d-\d\d \d\d:\d\d UTC$/', $evidence['entries'][0]['php_newest'] );
 		$this->assertStringContainsString( 'treat the site as compromised', $finding->fix() );
 	}
 

@@ -77,24 +77,26 @@ final class Revisions_Count_Check implements Check {
 			return Result::pass();
 		}
 
-		$evidence = array(
+		$evidence          = array(
 			'revisions'            => $revisions,
 			'posts_with_revisions' => (int) $totals[0]['parents'],
 			'warning_above_rows'   => $warning_above,
 			'threshold_basis'      => $context->thresholds()->basis( $this->id() ),
 			'WP_POST_REVISIONS'    => $this->limit_setting( $context ),
 		);
-		$top      = $context->database()->query(
+		$top               = $context->database()->query(
 			'SELECT post_parent AS parent, COUNT(*) AS revisions FROM ' . $posts . " WHERE post_type = 'revision'"
 			. ' GROUP BY post_parent ORDER BY revisions DESC, parent ASC LIMIT ' . self::LISTED
 		);
-		foreach ( $top as $index => $row ) {
+		$evidence['posts'] = array();
+		foreach ( $top as $row ) {
 			if ( ! self::is_count( $row['parent'] ?? null ) || ! self::is_count( $row['revisions'] ?? null ) ) {
 				throw new \UnexpectedValueException( 'The revisions by post query returned an unexpected row' );
 			}
-			$rank                                 = $index + 1;
-			$evidence[ "post_$rank" ]             = (int) $row['parent'];
-			$evidence[ "post_{$rank}_revisions" ] = (int) $row['revisions'];
+			$evidence['posts'][] = array(
+				'id'        => (int) $row['parent'],
+				'revisions' => (int) $row['revisions'],
+			);
 		}
 
 		return Result::findings(

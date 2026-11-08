@@ -67,16 +67,16 @@ final class Obfuscated_Code_Check_Test extends TestCase {
 		$this->assertSame( 4, $evidence['php_files_examined'] );
 		$this->assertSame( 1, $evidence['files_flagged'] );
 		$this->assertFalse( $evidence['scan_incomplete'] );
-		$this->assertSame( 'wp-content/plugins/example/inc/cache.php', $evidence['file_1'] );
-		$this->assertSame( 2, $evidence['file_1_line'] );
-		$this->assertSame( 'eval() of base64_decode()', $evidence['file_1_code'] );
+		$this->assertSame( 'wp-content/plugins/example/inc/cache.php', $evidence['files'][0]['path'] );
+		$this->assertSame( 2, $evidence['files'][0]['line'] );
+		$this->assertSame( 'eval() of base64_decode()', $evidence['files'][0]['code'] );
 		$this->assertStringContainsString( 'clean copy', $finding->fix() );
 	}
 
 	public function test_code_injected_into_wp_config_is_reported(): void {
 		$this->tree->file( 'wp-config.php', "<?php\n\$table_prefix = 'wptest_';\n" . substr( self::PLANTED, 6 ) );
 
-		$this->assertSame( 'wp-config.php', $this->run_check()->finding_list()[0]->evidence()['file_1'] );
+		$this->assertSame( 'wp-config.php', $this->run_check()->finding_list()[0]->evidence()['files'][0]['path'] );
 	}
 
 	public function test_files_are_listed_in_path_order_with_a_count_of_further_hits(): void {
@@ -85,10 +85,10 @@ final class Obfuscated_Code_Check_Test extends TestCase {
 
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
-		$this->assertSame( 'a.php', $evidence['file_1'] );
+		$this->assertSame( 'a.php', $evidence['files'][0]['path'] );
 		$this->assertArrayNotHasKey( 'file_1_more', $evidence );
-		$this->assertSame( 'b.php', $evidence['file_2'] );
-		$this->assertSame( 1, $evidence['file_2_more'] );
+		$this->assertSame( 'b.php', $evidence['files'][1]['path'] );
+		$this->assertSame( 1, $evidence['files'][1]['more'] );
 	}
 
 	public function test_a_clean_scan_that_did_not_see_every_file_is_a_skip_with_the_reason(): void {

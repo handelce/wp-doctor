@@ -70,8 +70,8 @@ final class Tables_Engine_Check_Test extends TestCase {
 		$this->assertSame( 'info', $finding->severity()->name() );
 		$this->assertSame( 4, $evidence['tables_with_prefix'] );
 		$this->assertSame( 2, $evidence['myisam_tables'] );
-		$this->assertSame( 'wptest_redirection_logs', $evidence['table_1'] );
-		$this->assertSame( 'wptest_terms', $evidence['table_2'] );
+		$this->assertSame( 'wptest_redirection_logs', $evidence['tables'][0] );
+		$this->assertSame( 'wptest_terms', $evidence['tables'][1] );
 		$this->assertStringContainsString( 'ALTER TABLE wptest_redirection_logs ENGINE=InnoDB', $finding->fix() );
 	}
 

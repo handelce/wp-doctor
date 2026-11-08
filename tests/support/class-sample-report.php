@@ -107,4 +107,46 @@ final class Sample_Report {
 			array()
 		);
 	}
+
+	/**
+	 * A report with one finding whose evidence holds lists.
+	 *
+	 * @return Report
+	 */
+	public static function with_lists(): Report {
+		return new Report(
+			'1.0.0-test',
+			'6.5.2',
+			array(
+				new Report_Entry(
+					'sec.plugins.unknown',
+					'security',
+					Result::findings(
+						new Finding(
+							'sec.plugins.unknown',
+							Severity::warning(),
+							'PHP in the plugins directory likely belongs to no plugin',
+							array(
+								'flagged' => 2,
+								'plugins' => array( 'wp-zxq', 'cache' ),
+								'entries' => array(
+									array(
+										'path'      => 'wp-content/plugins/wp-zxq',
+										'php_files' => 1,
+									),
+									array(
+										'path'      => 'wp-content/plugins/cache',
+										'php_files' => 3,
+									),
+								),
+								'none'    => array(),
+							),
+							'Look at each entry listed.'
+						)
+					)
+				),
+			),
+			array()
+		);
+	}
 }

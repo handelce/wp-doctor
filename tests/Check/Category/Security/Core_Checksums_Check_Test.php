@@ -142,7 +142,7 @@ final class Core_Checksums_Check_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'critical', $finding->severity()->name() );
 		$this->assertSame( 1, $evidence['modified_files'] );
-		$this->assertSame( 'wp-includes/functions.php', $evidence['modified_1'] );
+		$this->assertSame( 'wp-includes/functions.php', $evidence['modified'][0] );
 		$this->assertSame( 0, $evidence['missing_files'] );
 		$this->assertSame( 5, $evidence['files_compared'] );
 		$this->assertSame( '6.5.2', $evidence['wordpress_version'] );
@@ -159,12 +159,12 @@ final class Core_Checksums_Check_Test extends TestCase {
 
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
-		$this->assertSame( 'wp-admin/index.php', $evidence['modified_1'] );
-		$this->assertSame( 'wp-includes/functions.php', $evidence['modified_2'] );
-		$this->assertSame( 'wp-login.php', $evidence['modified_3'] );
-		$this->assertSame( 'wp-admin/missing-a.php', $evidence['missing_1'] );
-		$this->assertSame( 'wp-admin/missing-b.php', $evidence['missing_2'] );
-		$this->assertSame( 'wp-includes/js/script.js', $evidence['missing_3'] );
+		$this->assertSame( 'wp-admin/index.php', $evidence['modified'][0] );
+		$this->assertSame( 'wp-includes/functions.php', $evidence['modified'][1] );
+		$this->assertSame( 'wp-login.php', $evidence['modified'][2] );
+		$this->assertSame( 'wp-admin/missing-a.php', $evidence['missing'][0] );
+		$this->assertSame( 'wp-admin/missing-b.php', $evidence['missing'][1] );
+		$this->assertSame( 'wp-includes/js/script.js', $evidence['missing'][2] );
 	}
 
 	public function test_a_missing_core_file_is_critical_and_named(): void {
@@ -173,7 +173,7 @@ final class Core_Checksums_Check_Test extends TestCase {
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
 		$this->assertSame( 1, $evidence['missing_files'] );
-		$this->assertSame( 'wp-admin/index.php', $evidence['missing_1'] );
+		$this->assertSame( 'wp-admin/index.php', $evidence['missing'][0] );
 	}
 
 	public function test_files_below_wp_content_and_the_sample_documents_are_not_compared(): void {
@@ -195,8 +195,8 @@ final class Core_Checksums_Check_Test extends TestCase {
 
 		$evidence = $findings['critical']->evidence();
 		$this->assertSame( 2, $evidence['unknown_in_core_dirs'] );
-		$this->assertSame( 'wp-admin/css/extra.css', $evidence['unknown_1'] );
-		$this->assertSame( 'wp-includes/class-planted.php', $evidence['unknown_2'] );
+		$this->assertSame( 'wp-admin/css/extra.css', $evidence['unknown'][0] );
+		$this->assertSame( 'wp-includes/class-planted.php', $evidence['unknown'][1] );
 		$this->assertStringContainsString( 'likely', $findings['critical']->title() );
 	}
 
@@ -209,7 +209,7 @@ final class Core_Checksums_Check_Test extends TestCase {
 
 		$this->assertArrayNotHasKey( 'critical', $findings );
 		$this->assertSame( 1, $findings['warning']->evidence()['unknown_php_in_root'] );
-		$this->assertSame( 'planted.php', $findings['warning']->evidence()['unknown_1'] );
+		$this->assertSame( 'planted.php', $findings['warning']->evidence()['unknown'][0] );
 	}
 
 	public function test_the_config_template_of_the_official_docker_image_is_not_unknown_in_the_root(): void {
@@ -223,7 +223,7 @@ final class Core_Checksums_Check_Test extends TestCase {
 
 		$findings = $this->by_severity( $this->run_check() );
 
-		$this->assertSame( 'wp-includes/wp-config-docker.php', $findings['critical']->evidence()['unknown_1'] );
+		$this->assertSame( 'wp-includes/wp-config-docker.php', $findings['critical']->evidence()['unknown'][0] );
 	}
 
 	public function test_the_fix_for_a_root_file_alone_does_not_declare_the_site_compromised(): void {
@@ -257,9 +257,9 @@ final class Core_Checksums_Check_Test extends TestCase {
 		$evidence = $this->by_severity( $this->run_check() )['critical']->evidence();
 
 		$this->assertSame( 3, $evidence['unknown_in_core_dirs'] );
-		$this->assertSame( 'wp-admin/.htaccess', $evidence['unknown_1'] );
-		$this->assertSame( 'wp-includes/.user.ini', $evidence['unknown_2'] );
-		$this->assertSame( 'wp-includes/js/php.ini', $evidence['unknown_3'] );
+		$this->assertSame( 'wp-admin/.htaccess', $evidence['unknown'][0] );
+		$this->assertSame( 'wp-includes/.user.ini', $evidence['unknown'][1] );
+		$this->assertSame( 'wp-includes/js/php.ini', $evidence['unknown'][2] );
 	}
 
 	public function test_wp_config_and_index_php_in_the_root_are_not_unknown(): void {
@@ -391,7 +391,7 @@ final class Core_Checksums_Check_Test extends TestCase {
 		$this->assertSame( 1, $evidence['modified_files'] );
 		$this->assertSame( 0, $evidence['missing_files'] );
 		$this->assertSame( 1, $evidence['files_not_compared'] );
-		$this->assertSame( 'wp-includes/js/script.js', $evidence['not_compared_1'] );
+		$this->assertSame( 'wp-includes/js/script.js', $evidence['not_compared'][0] );
 		$this->assertTrue( $evidence['scan_incomplete'] );
 	}
 

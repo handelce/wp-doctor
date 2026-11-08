@@ -222,12 +222,12 @@ final class Php_Version_Check_Test extends TestCase {
 		$this->assertSame( 'info', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
-		$this->assertSame( 2, $evidence['plugins'] );
+		$this->assertSame( 2, $evidence['plugins_requiring_newer_php'] );
 		$this->assertSame( '8.2', $evidence['htaccess_php'] );
-		$this->assertSame( 'needs-new', $evidence['plugin_1'] );
-		$this->assertSame( '8.3', $evidence['plugin_1_requires_php'] );
-		$this->assertSame( 'single.php', $evidence['plugin_2'] );
-		$this->assertSame( '8.4.0', $evidence['plugin_2_requires_php'] );
+		$this->assertSame( 'needs-new', $evidence['plugins'][0]['plugin'] );
+		$this->assertSame( '8.3', $evidence['plugins'][0]['requires_php'] );
+		$this->assertSame( 'single.php', $evidence['plugins'][1]['plugin'] );
+		$this->assertSame( '8.4.0', $evidence['plugins'][1]['requires_php'] );
 	}
 
 	public function test_an_ended_hinted_php_and_a_plugin_mismatch_are_both_reported(): void {

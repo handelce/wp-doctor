@@ -231,11 +231,11 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertSame( 'info', $findings['administrator_list']->severity()->name() );
 		$evidence = $findings['administrator_list']->evidence();
 		$this->assertSame( 3, $evidence['administrators'] );
-		$this->assertSame( 'owner', $evidence['admin_1'] );
-		$this->assertSame( '2020-01-01 10:00:00', $evidence['admin_1_registered'] );
-		$this->assertSame( 'owner@example.test', $evidence['admin_1_email'] );
-		$this->assertSame( 12, $evidence['admin_1_posts'] );
-		$this->assertSame( 0, $evidence['admin_2_posts'] );
+		$this->assertSame( 'owner', $evidence['admins'][0]['login'] );
+		$this->assertSame( '2020-01-01 10:00:00', $evidence['admins'][0]['registered'] );
+		$this->assertSame( 'owner@example.test', $evidence['admins'][0]['email'] );
+		$this->assertSame( 12, $evidence['admins'][0]['posts'] );
+		$this->assertSame( 0, $evidence['admins'][1]['posts'] );
 		$this->assertFalse( $evidence['list_truncated'] );
 		$this->assertNotSame( '', $findings['administrator_list']->fix() );
 	}
@@ -255,8 +255,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
 		$this->assertSame( 3, $evidence['cluster_size'] );
-		$this->assertSame( 'new_one', $evidence['admin_1'] );
-		$this->assertSame( 'new_three', $evidence['admin_3'] );
+		$this->assertSame( 'new_one', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'new_three', $evidence['admins'][2]['login'] );
 		$this->assertArrayNotHasKey( 'admin_4', $evidence );
 		$this->assertStringContainsString( 'default', (string) $evidence['threshold_basis'] );
 	}
@@ -303,7 +303,7 @@ final class Admin_Users_Check_Test extends TestCase {
 
 		$findings = $this->by_rule( $result );
 		$this->assertArrayNotHasKey( 'registration_cluster', $findings );
-		$this->assertSame( 'unknown', $findings['administrator_list']->evidence()['admin_1_registered'] );
+		$this->assertSame( 'unknown', $findings['administrator_list']->evidence()['admins'][0]['registered'] );
 	}
 
 	public function test_more_administrators_than_the_limit_says_the_list_is_truncated(): void {
@@ -348,12 +348,12 @@ final class Admin_Users_Check_Test extends TestCase {
 		$list     = $findings['administrator_list']->evidence();
 		$this->assertSame( 200, $list['administrators'] );
 		$this->assertTrue( $list['list_truncated'] );
-		$this->assertSame( 'admin53', $list['admin_1'] );
-		$this->assertSame( 'rogue_tool', $findings['name_indicator']->evidence()['admin_1'] );
+		$this->assertSame( 'admin53', $list['admins'][0]['login'] );
+		$this->assertSame( 'rogue_tool', $findings['name_indicator']->evidence()['admins'][0]['login'] );
 		$cluster = $findings['registration_cluster']->evidence();
 		$this->assertSame( 3, $cluster['cluster_size'] );
-		$this->assertSame( 'new_one', $cluster['admin_1'] );
-		$this->assertSame( 'new_two', $cluster['admin_3'] );
+		$this->assertSame( 'new_one', $cluster['admins'][0]['login'] );
+		$this->assertSame( 'new_two', $cluster['admins'][2]['login'] );
 	}
 
 	public function test_the_odd_one_out_on_a_numeric_email_domain_names_that_account(): void {
@@ -366,8 +366,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		);
 
 		$evidence = $this->by_rule( $result )['odd_one_out']->evidence();
-		$this->assertSame( 'newcomer', $evidence['admin_1'] );
-		$this->assertSame( 'only administrator on 123, newest registration, no posts', $evidence['admin_1_reason'] );
+		$this->assertSame( 'newcomer', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'only administrator on 123, newest registration, no posts', $evidence['admins'][0]['reason'] );
 	}
 
 	public function test_the_odd_one_out_is_found_when_the_shared_domain_is_numeric(): void {
@@ -379,7 +379,7 @@ final class Admin_Users_Check_Test extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'newcomer', $this->by_rule( $result )['odd_one_out']->evidence()['admin_1'] );
+		$this->assertSame( 'newcomer', $this->by_rule( $result )['odd_one_out']->evidence()['admins'][0]['login'] );
 	}
 
 	public function test_a_login_equal_to_a_published_indicator_is_critical_and_names_the_report(): void {
@@ -395,10 +395,10 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
 		$this->assertSame( 1, $evidence['matches'] );
-		$this->assertSame( 'Rogue_Tool', $evidence['admin_1'] );
-		$this->assertSame( 'login equals rogue_tool', $evidence['admin_1_reason'] );
-		$this->assertSame( 'Invented campaign A', $evidence['admin_1_campaign'] );
-		$this->assertSame( 'https://reports.example.test/a', $evidence['admin_1_source'] );
+		$this->assertSame( 'Rogue_Tool', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'login equals rogue_tool', $evidence['admins'][0]['reason'] );
+		$this->assertSame( 'Invented campaign A', $evidence['admins'][0]['campaign'] );
+		$this->assertSame( 'https://reports.example.test/a', $evidence['admins'][0]['source'] );
 		$this->assertStringContainsString( 'likely', (string) $evidence['indicator_basis'] );
 		$this->assertStringContainsString( 'compromised', $finding->fix() );
 	}
@@ -412,8 +412,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		);
 
 		$evidence = $this->by_rule( $result )['name_indicator']->evidence();
-		$this->assertSame( 'xq_7f3a', $evidence['admin_1'] );
-		$this->assertSame( 'login starts with xq_', $evidence['admin_1_reason'] );
+		$this->assertSame( 'xq_7f3a', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'login starts with xq_', $evidence['admins'][0]['reason'] );
 	}
 
 	public function test_an_allowlisted_login_is_listed_but_never_judged(): void {
@@ -427,7 +427,7 @@ final class Admin_Users_Check_Test extends TestCase {
 
 		$findings = $this->by_rule( $result );
 		$this->assertSame( array( 'administrator_list' ), array_keys( $findings ) );
-		$this->assertSame( 'hostbot', $findings['administrator_list']->evidence()['admin_3'] );
+		$this->assertSame( 'hostbot', $findings['administrator_list']->evidence()['admins'][2]['login'] );
 	}
 
 	public function test_a_soft_indicator_with_the_documented_email_is_critical(): void {
@@ -441,8 +441,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		$findings = $this->by_rule( $result );
 		$this->assertArrayNotHasKey( 'soft_indicator', $findings );
 		$evidence = $findings['name_indicator']->evidence();
-		$this->assertSame( 'backupadmin', $evidence['admin_1'] );
-		$this->assertStringContainsString( 'email matches the report', (string) $evidence['admin_1_reason'] );
+		$this->assertSame( 'backupadmin', $evidence['admins'][0]['login'] );
+		$this->assertStringContainsString( 'email matches the report', (string) $evidence['admins'][0]['reason'] );
 	}
 
 	public function test_a_soft_indicator_needs_both_the_newest_registration_and_no_posts(): void {
@@ -472,9 +472,9 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
-		$this->assertSame( 'help', $evidence['admin_1'] );
-		$this->assertSame( 'login equals help; newest registration, no posts', $evidence['admin_1_reason'] );
-		$this->assertSame( 'https://reports.example.test/d', $evidence['admin_1_source'] );
+		$this->assertSame( 'help', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'login equals help; newest registration, no posts', $evidence['admins'][0]['reason'] );
+		$this->assertSame( 'https://reports.example.test/d', $evidence['admins'][0]['source'] );
 	}
 
 	public function test_the_wordpress_defaults_for_display_name_and_website_are_not_signals(): void {
@@ -487,7 +487,7 @@ final class Admin_Users_Check_Test extends TestCase {
 		);
 
 		$findings = $this->by_rule( $result );
-		$this->assertSame( 'help', $findings['administrator_list']->evidence()['admin_2'] );
+		$this->assertSame( 'help', $findings['administrator_list']->evidence()['admins'][1]['login'] );
 		$this->assertArrayNotHasKey( 'soft_indicator', $findings );
 	}
 
@@ -505,10 +505,10 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
 		$this->assertSame( 2, $evidence['matches'] );
-		$this->assertSame( 'blank', $evidence['admin_1'] );
-		$this->assertSame( 'no email address', $evidence['admin_1_reason'] );
-		$this->assertSame( 'broken', $evidence['admin_2'] );
-		$this->assertSame( 'not a valid email address', $evidence['admin_2_reason'] );
+		$this->assertSame( 'blank', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'no email address', $evidence['admins'][0]['reason'] );
+		$this->assertSame( 'broken', $evidence['admins'][1]['login'] );
+		$this->assertSame( 'not a valid email address', $evidence['admins'][1]['reason'] );
 	}
 
 	public function test_a_placeholder_email_domain_is_a_warning_and_a_dotless_one_is_not_an_address(): void {
@@ -523,9 +523,9 @@ final class Admin_Users_Check_Test extends TestCase {
 
 		$evidence = $this->by_rule( $result )['email_address']->evidence();
 		$this->assertSame( 3, $evidence['matches'] );
-		$this->assertSame( 'placeholder email domain', $evidence['admin_1_reason'] );
-		$this->assertSame( 'not a valid email address', $evidence['admin_2_reason'] );
-		$this->assertSame( 'placeholder email domain', $evidence['admin_3_reason'] );
+		$this->assertSame( 'placeholder email domain', $evidence['admins'][0]['reason'] );
+		$this->assertSame( 'not a valid email address', $evidence['admins'][1]['reason'] );
+		$this->assertSame( 'placeholder email domain', $evidence['admins'][2]['reason'] );
 	}
 
 	public function test_a_disposable_email_domain_is_a_warning_including_its_subdomains(): void {
@@ -539,8 +539,8 @@ final class Admin_Users_Check_Test extends TestCase {
 
 		$evidence = $this->by_rule( $result )['email_address']->evidence();
 		$this->assertSame( 2, $evidence['matches'] );
-		$this->assertSame( 'disposable email domain', $evidence['admin_1_reason'] );
-		$this->assertSame( 'disposable email domain', $evidence['admin_2_reason'] );
+		$this->assertSame( 'disposable email domain', $evidence['admins'][0]['reason'] );
+		$this->assertSame( 'disposable email domain', $evidence['admins'][1]['reason'] );
 	}
 
 	public function test_ordinary_email_addresses_raise_nothing(): void {
@@ -567,8 +567,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertSame( 'info', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$evidence = $finding->evidence();
-		$this->assertSame( 'newcomer', $evidence['admin_1'] );
-		$this->assertSame( 'only administrator on elsewhere-example.test, newest registration, no posts', $evidence['admin_1_reason'] );
+		$this->assertSame( 'newcomer', $evidence['admins'][0]['login'] );
+		$this->assertSame( 'only administrator on elsewhere-example.test, newest registration, no posts', $evidence['admins'][0]['reason'] );
 	}
 
 	public function test_the_odd_one_out_needs_three_admins_the_newest_registration_and_no_posts(): void {
@@ -657,8 +657,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		$result = ( new Admin_Users_Check() )->run( Context_Factory::with_driver( $driver ) );
 
 		$evidence = $this->by_rule( $result )['name_indicator']->evidence();
-		$this->assertSame( 'wpenginer', $evidence['admin_1'] );
-		$this->assertStringStartsWith( 'https://www.wordfence.com/', (string) $evidence['admin_1_source'] );
+		$this->assertSame( 'wpenginer', $evidence['admins'][0]['login'] );
+		$this->assertStringStartsWith( 'https://www.wordfence.com/', (string) $evidence['admins'][0]['source'] );
 	}
 
 	public function test_the_cluster_size_can_be_lowered_by_configuration(): void {
@@ -703,7 +703,7 @@ final class Admin_Users_Check_Test extends TestCase {
 		);
 
 		$findings = $this->by_rule( $result );
-		$this->assertSame( 'xtwang', $findings['administrator_list']->evidence()['admin_2'] );
+		$this->assertSame( 'xtwang', $findings['administrator_list']->evidence()['admins'][1]['login'] );
 		$this->assertArrayNotHasKey( 'name_indicator', $findings );
 		$this->assertArrayNotHasKey( 'soft_indicator', $findings );
 	}
@@ -721,8 +721,8 @@ final class Admin_Users_Check_Test extends TestCase {
 		$this->assertArrayNotHasKey( 'name_indicator', $findings );
 		$finding = $findings['soft_indicator'];
 		$this->assertSame( 'warning', $finding->severity()->name() );
-		$this->assertSame( 'xtw4a1f9c', $finding->evidence()['admin_1'] );
-		$this->assertStringContainsString( 'login starts with xtw', (string) $finding->evidence()['admin_1_reason'] );
+		$this->assertSame( 'xtw4a1f9c', $finding->evidence()['admins'][0]['login'] );
+		$this->assertStringContainsString( 'login starts with xtw', (string) $finding->evidence()['admins'][0]['reason'] );
 	}
 
 	public function test_an_allowlisted_login_does_not_count_towards_a_registration_cluster(): void {
@@ -735,7 +735,7 @@ final class Admin_Users_Check_Test extends TestCase {
 		);
 
 		$findings = $this->by_rule( $result );
-		$this->assertSame( 'hostbot', $findings['administrator_list']->evidence()['admin_2'] );
+		$this->assertSame( 'hostbot', $findings['administrator_list']->evidence()['admins'][1]['login'] );
 		$this->assertArrayNotHasKey( 'registration_cluster', $findings );
 	}
 

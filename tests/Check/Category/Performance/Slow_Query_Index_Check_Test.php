@@ -89,9 +89,9 @@ final class Slow_Query_Index_Check_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
-		$this->assertSame( 1, $evidence['join_1_line'] );
-		$this->assertSame( 'wptest_order_items.order_id (varchar, utf8mb4_unicode_ci) = wptest_orders.id (bigint)', $evidence['join_1'] );
-		$this->assertStringContainsString( 'wptest_order_items (i), type ALL, no key', $evidence['join_1_plan'] );
+		$this->assertSame( 1, $evidence['joins'][0]['line'] );
+		$this->assertSame( 'wptest_order_items.order_id (varchar, utf8mb4_unicode_ci) = wptest_orders.id (bigint)', $evidence['joins'][0]['join'] );
+		$this->assertStringContainsString( 'wptest_order_items (i), type ALL, no key', $evidence['joins'][0]['plan'] );
 		$this->assertStringNotContainsString( 'private-value', (string) json_encode( $evidence ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 	}
 

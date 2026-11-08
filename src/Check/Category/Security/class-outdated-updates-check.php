@@ -125,8 +125,8 @@ final class Outdated_Updates_Check implements Check {
 		if ( array() !== $missing ) {
 			$evidence['no_update_data_for'] = implode( ', ', array_keys( $missing ) );
 		}
-		$evidence += Evidence::names( 'plugin', $this->described( $plugins ) );
-		$evidence += Evidence::names( 'theme', $this->described( $themes ) );
+		$evidence['plugins'] = Evidence::listed( $this->described( $plugins ) );
+		$evidence['themes']  = Evidence::listed( $this->described( $themes ) );
 
 		return Result::findings(
 			new Finding(

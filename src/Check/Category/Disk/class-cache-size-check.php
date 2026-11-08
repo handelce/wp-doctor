@@ -99,12 +99,15 @@ final class Cache_Size_Check implements Check {
 			return array() === $gaps ? Result::pass() : Result::skipped( 'No cache folder measured was above the threshold, but ' . implode( '; ', $gaps ) );
 		}
 
-		$evidence = array(
+		$evidence            = array(
 			'warning_above_bytes' => $warning_above,
 			'threshold_basis'     => $context->thresholds()->basis( $this->id() ),
 		);
-		foreach ( $large as $index => $size ) {
-			$evidence = array_merge( $evidence, $size->evidence( 'cache_' . ( $index + 1 ), self::LISTED ) );
+		$evidence['caches']  = array();
+		$evidence['largest'] = array();
+		foreach ( $large as $size ) {
+			$evidence['caches'][] = $size->summary();
+			$evidence['largest']  = array_merge( $evidence['largest'], $size->largest( self::LISTED ) );
 		}
 
 		return Result::findings(

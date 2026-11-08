@@ -302,12 +302,14 @@ final class Injected_Content_Check implements Check {
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		foreach ( array_slice( $scripts, 0, Evidence::MAX_LISTED ) as $index => $post ) {
-			$rank                               = $index + 1;
-			$evidence[ "post_$rank" ]           = (int) $post[0]['id'];
-			$evidence[ "post_{$rank}_type" ]    = (string) $post[0]['type'];
-			$evidence[ "post_{$rank}_title" ]   = (string) $post[0]['title'];
-			$evidence[ "post_{$rank}_scripts" ] = implode( '; ', $post[1] );
+		$evidence['posts'] = array();
+		foreach ( array_slice( $scripts, 0, Evidence::MAX_LISTED ) as $post ) {
+			$evidence['posts'][] = array(
+				'id'      => (int) $post[0]['id'],
+				'type'    => (string) $post[0]['type'],
+				'title'   => (string) $post[0]['title'],
+				'scripts' => implode( '; ', $post[1] ),
+			);
 		}
 
 		return new Finding(
@@ -330,17 +332,19 @@ final class Injected_Content_Check implements Check {
 	 * @return Finding
 	 */
 	private function defacement_finding( array $defaced ): Finding {
-		$evidence = array(
+		$evidence          = array(
 			'recent_days'   => self::RECENT_DAYS,
 			'posts_flagged' => count( $defaced ),
 			'phrases'       => implode( ', ', self::DEFACEMENT_MARKERS ),
 		);
-		foreach ( $defaced as $index => $row ) {
-			$rank                                = $index + 1;
-			$evidence[ "post_$rank" ]            = (int) $row['id'];
-			$evidence[ "post_{$rank}_type" ]     = (string) $row['type'];
-			$evidence[ "post_{$rank}_title" ]    = (string) $row['title'];
-			$evidence[ "post_{$rank}_modified" ] = $row['modified'] . ' UTC';
+		$evidence['posts'] = array();
+		foreach ( $defaced as $row ) {
+			$evidence['posts'][] = array(
+				'id'       => (int) $row['id'],
+				'type'     => (string) $row['type'],
+				'title'    => (string) $row['title'],
+				'modified' => $row['modified'] . ' UTC',
+			);
 		}
 
 		return new Finding(

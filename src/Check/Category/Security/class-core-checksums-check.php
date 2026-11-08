@@ -195,9 +195,9 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 						'files_not_compared' => count( $not_compared ),
 						'scan_incomplete'    => $incomplete,
 					),
-					Evidence::names( 'modified', $modified ),
-					Evidence::names( 'missing', $missing ),
-					Evidence::names( 'not_compared', array_keys( $not_compared ) )
+					array( 'modified' => Evidence::listed( $modified ) ),
+					array( 'missing' => Evidence::listed( $missing ) ),
+					array( 'not_compared' => Evidence::listed( array_keys( $not_compared ) ) )
 				),
 				'Do not edit core files. Reinstall them from a clean copy of the same version (`wp core download --force --skip-content '
 				. '--version=' . $version . '`), then look for how they were changed. If you did not change them, treat the site as compromised.'
@@ -217,7 +217,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 						'unknown_php_in_root'  => count( $unknown_root ),
 						'scan_incomplete'      => $incomplete,
 					),
-					Evidence::names( 'unknown', array_merge( $unknown_core, $unknown_root ) )
+					array( 'unknown' => Evidence::listed( array_merge( $unknown_core, $unknown_root ) ) )
 				),
 				array() !== $unknown_core
 					? 'Open each file. wp-admin and wp-includes hold only WordPress files, so anything else there is likely planted. '

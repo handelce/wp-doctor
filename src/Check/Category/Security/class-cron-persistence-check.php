@@ -341,19 +341,20 @@ final class Cron_Persistence_Check implements Check {
 	private function planted_finding( array $planted, array $events, array $gaps ): Finding {
 		ksort( $planted, SORT_STRING );
 		$evidence = array(
-			'hooks'           => count( $planted ),
+			'hooks_flagged'   => count( $planted ),
 			'scan_incomplete' => array() !== $gaps,
 		);
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		$rank = 0;
+		$evidence['hooks'] = array();
 		foreach ( array_slice( $planted, 0, self::LISTED, true ) as $hook => $paths ) {
-			++$rank;
 			sort( $paths, SORT_STRING );
-			$evidence[ "hook_$rank" ]            = (string) $hook;
-			$evidence[ "hook_{$rank}_events" ]   = $events[ $hook ];
-			$evidence[ "hook_{$rank}_named_in" ] = implode( ', ', array_slice( $paths, 0, 5 ) ) . ( count( $paths ) > 5 ? ', ...' : '' );
+			$evidence['hooks'][] = array(
+				'hook'     => (string) $hook,
+				'events'   => $events[ $hook ],
+				'named_in' => implode( ', ', array_slice( $paths, 0, 5 ) ) . ( count( $paths ) > 5 ? ', ...' : '' ),
+			);
 		}
 
 		return new Finding(
@@ -388,11 +389,12 @@ final class Cron_Persistence_Check implements Check {
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		$rank = 0;
+		$evidence['hooks'] = array();
 		foreach ( array_slice( $orphans, 0, self::LISTED, true ) as $hook => $count ) {
-			++$rank;
-			$evidence[ "hook_$rank" ]          = (string) $hook;
-			$evidence[ "hook_{$rank}_events" ] = $count;
+			$evidence['hooks'][] = array(
+				'hook'   => (string) $hook,
+				'events' => $count,
+			);
 		}
 
 		return new Finding(

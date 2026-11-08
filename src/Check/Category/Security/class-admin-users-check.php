@@ -416,26 +416,21 @@ final class Admin_Users_Check implements Check {
 	}
 
 	/**
-	 * Numbered hits with the rule that produced them.
+	 * The hits, with the rule that produced them.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param string                            $rule Rule key written to the evidence, such as name_indicator.
 	 * @param array<int, array<string, string>> $hits Hits built by hit().
-	 * @return array<string, string|int>
+	 * @return array<string, mixed>
 	 */
 	private function hit_evidence( string $rule, array $hits ): array {
-		$evidence = array(
+		$evidence           = array(
 			'rule'            => $rule,
 			'matches'         => count( $hits ),
 			'indicator_basis' => self::INDICATOR_BASIS,
 		);
-		foreach ( array_slice( $hits, 0, Evidence::MAX_LISTED ) as $index => $hit ) {
-			$rank = $index + 1;
-			foreach ( $hit as $field => $value ) {
-				$evidence[ 'login' === $field ? "admin_$rank" : "admin_{$rank}_$field" ] = $value;
-			}
-		}
+		$evidence['admins'] = array_slice( array_values( $hits ), 0, Evidence::MAX_LISTED );
 
 		return $evidence;
 	}
@@ -460,25 +455,27 @@ final class Admin_Users_Check implements Check {
 	}
 
 	/**
-	 * Numbered account details.
+	 * Account details for each administrator.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param array<int, array<string, mixed>> $admins    Accounts to list, in registration order.
 	 * @param bool                             $truncated Whether the query hit its row limit.
-	 * @return array<string, string|int|bool>
+	 * @return array<string, mixed>
 	 */
 	private function evidence( array $admins, bool $truncated ): array {
-		$evidence = array(
+		$evidence           = array(
 			'administrators' => count( $admins ),
 			'list_truncated' => $truncated,
 		);
-		foreach ( array_slice( $admins, 0, Evidence::MAX_LISTED ) as $index => $admin ) {
-			$rank                                   = $index + 1;
-			$evidence[ "admin_$rank" ]              = (string) $admin['login'];
-			$evidence[ "admin_{$rank}_registered" ] = null === $admin['time'] ? 'unknown' : (string) $admin['registered'];
-			$evidence[ "admin_{$rank}_email" ]      = (string) $admin['email'];
-			$evidence[ "admin_{$rank}_posts" ]      = (int) $admin['posts'];
+		$evidence['admins'] = array();
+		foreach ( array_slice( $admins, 0, Evidence::MAX_LISTED ) as $admin ) {
+			$evidence['admins'][] = array(
+				'login'      => (string) $admin['login'],
+				'registered' => null === $admin['time'] ? 'unknown' : (string) $admin['registered'],
+				'email'      => (string) $admin['email'],
+				'posts'      => (int) $admin['posts'],
+			);
 		}
 
 		return $evidence;

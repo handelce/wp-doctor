@@ -223,9 +223,9 @@ final class Injected_Content_Check_Test extends TestCase {
 		$this->assertSame( 2, $evidence['posts_with_scripts'] );
 		$this->assertSame( 1, $evidence['posts_flagged'] );
 		$this->assertSame( 'example.test', $evidence['site_hosts'] );
-		$this->assertSame( 40, $evidence['post_1'] );
-		$this->assertSame( 'Example post 40', $evidence['post_1_title'] );
-		$this->assertSame( 'script from cdn.bad.invalid', $evidence['post_1_scripts'] );
+		$this->assertSame( 40, $evidence['posts'][0]['id'] );
+		$this->assertSame( 'Example post 40', $evidence['posts'][0]['title'] );
+		$this->assertSame( 'script from cdn.bad.invalid', $evidence['posts'][0]['scripts'] );
 		$this->assertStringContainsString( 'wp db search <host> --all-tables', $finding->fix() );
 	}
 
@@ -251,8 +251,8 @@ final class Injected_Content_Check_Test extends TestCase {
 
 		$finding = $this->finding( $this->run_with( $driver ), 'info' );
 
-		$this->assertSame( 7, $finding->evidence()['post_1'] );
-		$this->assertSame( '2026-11-07 10:00:00 UTC', $finding->evidence()['post_1_modified'] );
+		$this->assertSame( 7, $finding->evidence()['posts'][0]['id'] );
+		$this->assertSame( '2026-11-07 10:00:00 UTC', $finding->evidence()['posts'][0]['modified'] );
 		$this->assertSame( 30, $finding->evidence()['recent_days'] );
 	}
 

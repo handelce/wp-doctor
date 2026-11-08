@@ -133,15 +133,17 @@ final class Autoload_Orphaned_Check implements Check {
 			return Result::pass();
 		}
 
-		$evidence = array(
+		$evidence            = array(
 			'large_options_examined' => count( $rows ) < self::EXAMINED ? count( $rows ) : 'the largest ' . self::EXAMINED . '; any smaller ones above the threshold were not examined',
 			'larger_than_bytes'      => $larger_than,
 			'threshold_basis'        => $context->thresholds()->basis( $this->id() ),
 		);
-		foreach ( array_slice( $orphans, 0, Evidence::MAX_LISTED ) as $index => $orphan ) {
-			$rank                               = $index + 1;
-			$evidence[ "option_$rank" ]         = $orphan['name'];
-			$evidence[ "option_{$rank}_bytes" ] = $orphan['bytes'];
+		$evidence['options'] = array();
+		foreach ( array_slice( $orphans, 0, Evidence::MAX_LISTED ) as $orphan ) {
+			$evidence['options'][] = array(
+				'name'  => $orphan['name'],
+				'bytes' => $orphan['bytes'],
+			);
 		}
 
 		return Result::findings(

@@ -66,62 +66,100 @@ final class Finding_Test extends TestCase {
 		$sev = Severity::info();
 
 		return array(
-			'no arguments'                 => array(
+			'no arguments'                   => array(
 				function () {
 						return new Finding();
 				},
 			),
-			'no severity'                  => array(
+			'no severity'                    => array(
 				function () {
 								return new Finding( 'a.b' );
 				},
 			),
-			'no title'                     => array(
+			'no title'                       => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev );
 				},
 			),
-			'no evidence'                  => array(
+			'no evidence'                    => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, 'T' );
 				},
 			),
-			'no fix'                       => array(
+			'no fix'                         => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, 'T', array( 'k' => 'v' ) );
 				},
 			),
-			'empty id'                     => array(
+			'empty id'                       => array(
 				function () use ( $sev ) {
 								return new Finding( '', $sev, 'T', array( 'k' => 'v' ), 'F' );
 				},
 			),
-			'blank title'                  => array(
+			'blank title'                    => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, '  ', array( 'k' => 'v' ), 'F' );
 				},
 			),
-			'empty evidence'               => array(
+			'empty evidence'                 => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, 'T', array(), 'F' );
 				},
 			),
-			'empty fix'                    => array(
+			'empty fix'                      => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, 'T', array( 'k' => 'v' ), '' );
 				},
 			),
-			'evidence with a numeric key'  => array(
+			'evidence with a numeric key'    => array(
 				function () use ( $sev ) {
 								return new Finding( 'a.b', $sev, 'T', array( 'v' ), 'F' );
 				},
 			),
-			'evidence with an array value' => array(
+			'evidence with a list in a list' => array(
 				function () use ( $sev ) {
-								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( 'nested' ) ), 'F' );
+								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( array( array( 'nested' ) ) ) ), 'F' );
+				},
+			),
+			'evidence with a keyed array'    => array(
+				function () use ( $sev ) {
+								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( 'a' => 1 ) ), 'F' );
+				},
+			),
+			'a list of scalars and objects'  => array(
+				function () use ( $sev ) {
+								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( 'x', array( 'path' => 'y' ) ) ), 'F' );
+				},
+			),
+			'an object with a numeric field' => array(
+				function () use ( $sev ) {
+								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( array( 'y' ) ) ), 'F' );
+				},
+			),
+			'an empty object in a list'      => array(
+				function () use ( $sev ) {
+								return new Finding( 'a.b', $sev, 'T', array( 'k' => array( array() ) ), 'F' );
 				},
 			),
 		);
+	}
+
+	public function test_evidence_may_hold_lists_of_scalars_and_lists_of_objects(): void {
+		$evidence = array(
+			'count' => 2,
+			'names' => array( 'akismet', 'hello.php' ),
+			'files' => array(
+				array(
+					'path'  => 'a.php',
+					'bytes' => 10,
+				),
+			),
+			'none'  => array(),
+		);
+
+		$finding = new Finding( 'a.b', Severity::info(), 'T', $evidence, 'F' );
+
+		$this->assertSame( $evidence, $finding->evidence() );
 	}
 
 	public function test_the_incomplete_constructions_are_not_an_empty_list(): void {

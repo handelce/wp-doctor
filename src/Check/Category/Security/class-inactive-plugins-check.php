@@ -124,7 +124,7 @@ final class Inactive_Plugins_Check implements Check {
 						'inactive'        => count( $inactive ),
 						'scan_incomplete' => null !== $gap,
 					),
-					Evidence::names( 'plugin', $inactive )
+					array( 'plugins' => Evidence::listed( $inactive ) )
 				),
 				'Delete plugins you do not use from the Plugins screen, or with `wp plugin delete <plugin>`. Inactive plugins are not '
 				. 'updated automatically on every host, and their files can still be requested directly.'

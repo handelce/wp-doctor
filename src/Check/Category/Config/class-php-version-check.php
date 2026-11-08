@@ -296,18 +296,19 @@ final class Php_Version_Check implements Runs_Without_Config {
 
 		ksort( $above );
 		$evidence = array(
-			'htaccess_php'  => $hinted,
-			'htaccess_line' => $line,
-			'plugins'       => count( $above ),
+			'htaccess_php'                => $hinted,
+			'htaccess_line'               => $line,
+			'plugins_requiring_newer_php' => count( $above ),
 		);
 		if ( null !== $gap ) {
 			$evidence['plugins_not_all_read'] = $gap;
 		}
-		$rank = 0;
+		$evidence['plugins'] = array();
 		foreach ( array_slice( $above, 0, 20, true ) as $plugin => $required ) {
-			++$rank;
-			$evidence[ "plugin_$rank" ]                = (string) $plugin;
-			$evidence[ "plugin_{$rank}_requires_php" ] = $required;
+			$evidence['plugins'][] = array(
+				'plugin'       => (string) $plugin,
+				'requires_php' => $required,
+			);
 		}
 
 		$finding = new Finding(

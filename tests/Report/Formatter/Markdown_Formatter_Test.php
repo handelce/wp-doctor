@@ -103,4 +103,12 @@ final class Markdown_Formatter_Test extends TestCase {
 
 		$this->assertStringContainsString( '- `sec.c.mixed`: 3 findings, most severe critical (not counted)', $md );
 	}
+
+	public function test_evidence_lists_become_nested_bullets_with_one_line_per_item(): void {
+		$md = $this->format( Sample_Report::with_lists() );
+
+		$this->assertStringContainsString( "- plugins:\n  - `wp-zxq`\n  - `cache`\n", $md );
+		$this->assertStringContainsString( "- entries:\n  - path: `wp-content/plugins/wp-zxq`, php\\_files: `1`\n  - path: `wp-content/plugins/cache`, php\\_files: `3`\n", $md );
+		$this->assertStringContainsString( "- none: none\n", $md );
+	}
 }

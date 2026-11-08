@@ -43,8 +43,8 @@ final class Cron_Duplicates_Check_Integration_Test extends TestCase {
 		$findings = $result->finding_list();
 		$this->assertCount( 1, $findings );
 		$this->assertSame( 'critical', $findings[0]->severity()->name() );
-		$this->assertSame( 'example_cleanup', $findings[0]->evidence()['hook_1'] );
-		$this->assertSame( 60, $findings[0]->evidence()['hook_1_copies'] );
+		$this->assertSame( 'example_cleanup', $findings[0]->evidence()['hooks'][0]['hook'] );
+		$this->assertSame( 60, $findings[0]->evidence()['hooks'][0]['copies'] );
 		$this->assertSame( 61, $findings[0]->evidence()['scheduled_events'] );
 		$this->assertArrayNotHasKey( 'hook_2', $findings[0]->evidence() );
 	}

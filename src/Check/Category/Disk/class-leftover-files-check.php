@@ -158,7 +158,7 @@ final class Leftover_Files_Check implements Check {
 					'scan_incomplete' => $incomplete,
 				),
 				$notes,
-				Evidence::files( Evidence::by_path( $group ) )
+				array( 'files' => Evidence::files( Evidence::by_path( $group ) ) )
 			),
 			$fix
 		);

@@ -83,14 +83,16 @@ final class Tables_Bloat_Check implements Check {
 			return Result::pass();
 		}
 
-		$evidence = array(
+		$evidence           = array(
 			'larger_than_bytes' => $larger_than,
 			'threshold_basis'   => $context->thresholds()->basis( $this->id() ),
 		);
-		foreach ( array_slice( $bloated, 0, 10 ) as $index => $table ) {
-			$rank                              = $index + 1;
-			$evidence[ "table_$rank" ]         = $table['name'];
-			$evidence[ "table_{$rank}_bytes" ] = $table['bytes'];
+		$evidence['tables'] = array();
+		foreach ( array_slice( $bloated, 0, 10 ) as $table ) {
+			$evidence['tables'][] = array(
+				'name'  => $table['name'],
+				'bytes' => $table['bytes'],
+			);
 		}
 
 		return Result::findings(

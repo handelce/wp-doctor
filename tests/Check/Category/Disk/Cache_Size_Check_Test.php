@@ -55,11 +55,11 @@ final class Cache_Size_Check_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertSame( 500, $evidence['warning_above_bytes'] );
-		$this->assertSame( 'wp-content/cache', $evidence['cache_1_path'] );
-		$this->assertSame( 900, $evidence['cache_1_bytes'] );
-		$this->assertSame( 'wp-content/cache/supercache', $evidence['cache_1_largest_1'] );
-		$this->assertSame( 600, $evidence['cache_1_largest_1_bytes'] );
-		$this->assertArrayNotHasKey( 'cache_2_path', $evidence );
+		$this->assertSame( 'wp-content/cache', $evidence['caches'][0]['path'] );
+		$this->assertSame( 900, $evidence['caches'][0]['bytes'] );
+		$this->assertSame( 'wp-content/cache/supercache', $evidence['largest'][0]['path'] );
+		$this->assertSame( 600, $evidence['largest'][0]['bytes'] );
+		$this->assertCount( 1, $evidence['caches'] );
 	}
 
 	public function test_caches_below_the_threshold_pass(): void {

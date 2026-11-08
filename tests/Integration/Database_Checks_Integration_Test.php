@@ -68,7 +68,7 @@ final class Database_Checks_Integration_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 1, $evidence['plugin_updates'] );
-		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugin_1'] );
+		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugins'][0] );
 		$this->assertSame( 0, $evidence['theme_updates'] );
 		$this->assertSame( '6.5.5', $evidence['core_available'] );
 	}
@@ -98,8 +98,8 @@ final class Database_Checks_Integration_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 61, $evidence['overdue_events'] );
-		$this->assertSame( 'example_cleanup', $evidence['hook_1'] );
-		$this->assertSame( 60, $evidence['hook_1_overdue'] );
+		$this->assertSame( 'example_cleanup', $evidence['hooks'][0]['hook'] );
+		$this->assertSame( 60, $evidence['hooks'][0]['overdue'] );
 	}
 
 	public function test_a_schedule_that_is_not_yet_due_passes(): void {
@@ -113,10 +113,10 @@ final class Database_Checks_Integration_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 3, $evidence['tables_with_prefix'] );
-		$this->assertSame( 'wptest_postmeta', $evidence['table_1'] );
-		$this->assertSame( 'wptest_posts', $evidence['table_2'] );
-		$this->assertSame( 'wptest_security_log', $evidence['table_3'] );
-		$this->assertGreaterThan( $evidence['table_2_bytes'], $evidence['table_1_bytes'] );
+		$this->assertSame( 'wptest_postmeta', $evidence['tables'][0]['name'] );
+		$this->assertSame( 'wptest_posts', $evidence['tables'][1]['name'] );
+		$this->assertSame( 'wptest_security_log', $evidence['tables'][2]['name'] );
+		$this->assertGreaterThan( $evidence['tables'][1]['bytes'], $evidence['tables'][0]['bytes'] );
 	}
 
 	public function test_revisions_are_counted_by_type_and_grouped_by_their_post(): void {
@@ -125,7 +125,7 @@ final class Database_Checks_Integration_Test extends TestCase {
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 6, $evidence['revisions'] );
 		$this->assertSame( 2, $evidence['posts_with_revisions'] );
-		$this->assertSame( array( 2, 4, 1, 2 ), array( $evidence['post_1'], $evidence['post_1_revisions'], $evidence['post_2'], $evidence['post_2_revisions'] ) );
+		$this->assertSame( array( 2, 4, 1, 2 ), array( $evidence['posts'][0]['id'], $evidence['posts'][0]['revisions'], $evidence['posts'][1]['id'], $evidence['posts'][1]['revisions'] ) );
 	}
 
 	public function test_myisam_base_tables_with_the_prefix_are_listed(): void {
@@ -134,7 +134,7 @@ final class Database_Checks_Integration_Test extends TestCase {
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 3, $evidence['tables_with_prefix'] );
 		$this->assertSame( 2, $evidence['myisam_tables'] );
-		$this->assertSame( array( 'wptest_old_log', 'wptest_terms' ), array( $evidence['table_1'], $evidence['table_2'] ) );
+		$this->assertSame( array( 'wptest_old_log', 'wptest_terms' ), $evidence['tables'] );
 	}
 
 	public function test_the_real_server_version_is_read_and_judged_by_its_series(): void {
@@ -162,10 +162,10 @@ final class Database_Checks_Integration_Test extends TestCase {
 		}
 		$this->assertSame( array( 'warning', 'info' ), array_keys( $by ) );
 		$this->assertSame( 2, $by['warning']['posts_with_scripts'] );
-		$this->assertSame( array( 2, 'script from cdn.bad.invalid' ), array( $by['warning']['post_1'], $by['warning']['post_1_scripts'] ) );
+		$this->assertSame( array( 2, 'script from cdn.bad.invalid' ), array( $by['warning']['posts'][0]['id'], $by['warning']['posts'][0]['scripts'] ) );
 		$this->assertArrayNotHasKey( 'post_2', $by['warning'] );
 		$this->assertSame( 1, $by['info']['posts_flagged'] );
-		$this->assertSame( 5, $by['info']['post_1'] );
+		$this->assertSame( 5, $by['info']['posts'][0]['id'] );
 	}
 
 	public function test_joins_that_cannot_share_an_index_are_found_with_explain_on_the_server(): void {
@@ -189,8 +189,8 @@ final class Database_Checks_Integration_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$lines    = array();
-		for ( $rank = 1; isset( $evidence[ "join_{$rank}_line" ] ); $rank++ ) {
-			$lines[] = $evidence[ "join_{$rank}_line" ];
+		foreach ( $evidence['joins'] as $join ) {
+			$lines[] = $join['line'];
 		}
 		$this->assertSame( array( 1, 2, 3 ), $lines );
 		$this->assertSame( 4, $evidence['statements_examined'] );
@@ -209,27 +209,27 @@ final class Database_Checks_Integration_Test extends TestCase {
 
 		$list = $by['administrator_list']->evidence();
 		$this->assertSame( 5, $list['administrators'] );
-		$this->assertSame( 'owner', $list['admin_1'] );
-		$this->assertSame( '2020-01-01 10:00:00', $list['admin_1_registered'] );
-		$this->assertSame( 2, $list['admin_1_posts'] );
-		$this->assertSame( 'new_three', $list['admin_4'] );
-		$this->assertSame( 0, $list['admin_4_posts'] );
+		$this->assertSame( 'owner', $list['admins'][0]['login'] );
+		$this->assertSame( '2020-01-01 10:00:00', $list['admins'][0]['registered'] );
+		$this->assertSame( 2, $list['admins'][0]['posts'] );
+		$this->assertSame( 'new_three', $list['admins'][3]['login'] );
+		$this->assertSame( 0, $list['admins'][3]['posts'] );
 
 		$cluster = $by['registration_cluster']->evidence();
 		$this->assertSame( 'critical', $by['registration_cluster']->severity()->name() );
 		$this->assertSame( 3, $cluster['cluster_size'] );
-		$this->assertSame( 'new_one', $cluster['admin_1'] );
+		$this->assertSame( 'new_one', $cluster['admins'][0]['login'] );
 
 		$name = $by['name_indicator']->evidence();
 		$this->assertSame( 'critical', $by['name_indicator']->severity()->name() );
 		$this->assertSame( 1, $name['matches'] );
-		$this->assertSame( 'wpenginer', $name['admin_1'] );
-		$this->assertStringStartsWith( 'https://www.wordfence.com/', (string) $name['admin_1_source'] );
+		$this->assertSame( 'wpenginer', $name['admins'][0]['login'] );
+		$this->assertStringStartsWith( 'https://www.wordfence.com/', (string) $name['admins'][0]['source'] );
 
 		$email = $by['email_address']->evidence();
 		$this->assertSame( 'warning', $by['email_address']->severity()->name() );
 		$this->assertSame( 5, $email['matches'] );
-		$this->assertSame( 'placeholder email domain', $email['admin_1_reason'] );
+		$this->assertSame( 'placeholder email domain', $email['admins'][0]['reason'] );
 	}
 
 	public function test_pending_updates_are_read_from_the_stored_wordpress_objects(): void {
@@ -239,8 +239,8 @@ final class Database_Checks_Integration_Test extends TestCase {
 		$this->assertSame( 2, $evidence['plugin_updates'] );
 		$this->assertSame( 1, $evidence['theme_updates'] );
 		$this->assertSame( '6.5.3', $evidence['core_available'] );
-		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugin_1'] );
-		$this->assertSame( 'twentytwentyfour -> 1.3', $evidence['theme_1'] );
+		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugins'][0] );
+		$this->assertSame( 'twentytwentyfour -> 1.3', $evidence['themes'][0] );
 	}
 
 	public function test_stored_update_data_with_nothing_pending_passes(): void {

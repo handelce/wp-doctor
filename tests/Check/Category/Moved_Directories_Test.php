@@ -42,7 +42,7 @@ final class Moved_Directories_Test extends TestCase {
 		$result = ( new Uploads_Php_Check() )->run( $context );
 
 		$this->assertSame( Result::FINDINGS, $result->status() );
-		$paths = implode( ' ', array_map( 'strval', $result->finding_list()[0]->evidence() ) );
+		$paths = implode( ' ', array_column( $result->finding_list()[0]->evidence()['files'], 'path' ) );
 		$this->assertStringContainsString( 'app/media/2026/planted.php', $paths );
 		$this->assertStringNotContainsString( 'ignored.php', $paths );
 	}

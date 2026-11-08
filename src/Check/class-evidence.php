@@ -13,9 +13,9 @@ namespace WP_Doctor\Check;
 use WP_Doctor\Fs\File_Info;
 
 /**
- * Turns lists into the flat, ordered key/value pairs that a Finding carries.
- * Names and paths are stored as values under numbered keys, so a site-chosen
- * string can never become a key.
+ * Turns files and names into the lists a Finding carries as evidence, capped
+ * at MAX_LISTED items. Names and paths are always values, never keys, so a
+ * site-chosen string can never become a key.
  *
  * @since 0.1.0
  */
@@ -24,40 +24,35 @@ final class Evidence {
 	public const MAX_LISTED = 20;
 
 	/**
-	 * Numbered path and size pairs, in the order given.
+	 * Path and size of each file, in the order given.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param File_Info[] $files Files to list. Only the first MAX_LISTED appear.
-	 * @return array<string, string|int>
+	 * @return array<int, array{path: string, bytes: int}>
 	 */
 	public static function files( array $files ): array {
-		$evidence = array();
-		foreach ( array_slice( array_values( $files ), 0, self::MAX_LISTED ) as $index => $file ) {
-			$rank                             = $index + 1;
-			$evidence[ "file_$rank" ]         = $file->path();
-			$evidence[ "file_{$rank}_bytes" ] = $file->size();
+		$listed = array();
+		foreach ( array_slice( array_values( $files ), 0, self::MAX_LISTED ) as $file ) {
+			$listed[] = array(
+				'path'  => $file->path(),
+				'bytes' => $file->size(),
+			);
 		}
 
-		return $evidence;
+		return $listed;
 	}
 
 	/**
-	 * Numbered names, in the order given.
+	 * The first MAX_LISTED names, in the order given.
 	 *
-	 * @since 0.1.0
+	 * @since 1.0.0
 	 *
-	 * @param string   $label Key prefix, such as plugin.
-	 * @param string[] $names Names to list, such as plugin slugs. Only the first MAX_LISTED appear.
-	 * @return array<string, string>
+	 * @param string[] $names Names to list, such as plugin slugs.
+	 * @return string[]
 	 */
-	public static function names( string $label, array $names ): array {
-		$evidence = array();
-		foreach ( array_slice( array_values( $names ), 0, self::MAX_LISTED ) as $index => $name ) {
-			$evidence[ $label . '_' . ( $index + 1 ) ] = (string) $name;
-		}
-
-		return $evidence;
+	public static function listed( array $names ): array {
+		return array_map( 'strval', array_slice( array_values( $names ), 0, self::MAX_LISTED ) );
 	}
 
 	/**

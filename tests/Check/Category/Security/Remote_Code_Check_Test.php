@@ -69,9 +69,9 @@ final class Remote_Code_Check_Test extends TestCase {
 		$this->assertSame( 'critical', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$this->assertSame( 4, $evidence['php_files_examined'] );
-		$this->assertSame( 'wp-content/themes/example/functions.php', $evidence['file_1'] );
-		$this->assertSame( 3, $evidence['file_1_line'] );
-		$this->assertSame( 'eval() of wp_remote_retrieve_body(), wp_remote_get()', $evidence['file_1_code'] );
+		$this->assertSame( 'wp-content/themes/example/functions.php', $evidence['files'][0]['path'] );
+		$this->assertSame( 3, $evidence['files'][0]['line'] );
+		$this->assertSame( 'eval() of wp_remote_retrieve_body(), wp_remote_get()', $evidence['files'][0]['code'] );
 	}
 
 	public function test_an_include_of_a_url_in_wp_config_is_reported(): void {
@@ -79,8 +79,8 @@ final class Remote_Code_Check_Test extends TestCase {
 
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
-		$this->assertSame( 'wp-config.php', $evidence['file_1'] );
-		$this->assertSame( 'include of a URL', $evidence['file_1_code'] );
+		$this->assertSame( 'wp-config.php', $evidence['files'][0]['path'] );
+		$this->assertSame( 'include of a URL', $evidence['files'][0]['code'] );
 	}
 
 	public function test_a_clean_scan_that_did_not_see_every_file_is_a_skip_with_the_reason(): void {

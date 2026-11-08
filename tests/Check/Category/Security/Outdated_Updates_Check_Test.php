@@ -169,9 +169,9 @@ final class Outdated_Updates_Check_Test extends TestCase {
 		$this->assertSame( 1, $evidence['theme_updates'] );
 		$this->assertSame( 1, $evidence['core_updates'] );
 		$this->assertSame( '6.5.3', $evidence['core_available'] );
-		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugin_1'] );
-		$this->assertSame( 'zeta/zeta.php -> 2.0', $evidence['plugin_2'] );
-		$this->assertSame( 'twentytwentyfour -> 1.3', $evidence['theme_1'] );
+		$this->assertSame( 'alpha/alpha.php -> 1.5.1', $evidence['plugins'][0] );
+		$this->assertSame( 'zeta/zeta.php -> 2.0', $evidence['plugins'][1] );
+		$this->assertSame( 'twentytwentyfour -> 1.3', $evidence['themes'][0] );
 		$this->assertNotSame( '', $finding->fix() );
 	}
 
@@ -223,7 +223,7 @@ final class Outdated_Updates_Check_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 1, $evidence['plugin_updates'] );
-		$this->assertSame( 'a/a.php -> 2.0', $evidence['plugin_1'] );
+		$this->assertSame( 'a/a.php -> 2.0', $evidence['plugins'][0] );
 		$queries = array_slice( $driver->statements, 1 );
 		$this->assertCount( 6, $queries );
 		foreach ( $queries as $sql ) {

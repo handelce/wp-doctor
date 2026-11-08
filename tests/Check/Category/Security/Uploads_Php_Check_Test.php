@@ -63,7 +63,7 @@ final class Uploads_Php_Check_Test extends TestCase {
 		$finding = $this->run_check()->finding_list()[0];
 
 		$this->assertSame( 'critical', $finding->severity()->name() );
-		$this->assertSame( 'wp-content/uploads/2024/' . $name, $finding->evidence()['file_1'] );
+		$this->assertSame( 'wp-content/uploads/2024/' . $name, $finding->evidence()['files'][0]['path'] );
 		$this->assertSame( 1, $finding->evidence()['php_files'] );
 		$this->assertNotSame( '', $finding->fix() );
 	}
@@ -124,7 +124,7 @@ final class Uploads_Php_Check_Test extends TestCase {
 
 		$this->assertSame( 1, $evidence['php_files'] );
 		$this->assertSame( 1, $evidence['empty_index_stubs_ignored'] );
-		$this->assertSame( 'wp-content/uploads/2024/index.php', $evidence['file_1'] );
+		$this->assertSame( 'wp-content/uploads/2024/index.php', $evidence['files'][0]['path'] );
 	}
 
 	public function test_a_large_php_file_named_index_is_not_taken_for_a_stub(): void {
@@ -139,8 +139,8 @@ final class Uploads_Php_Check_Test extends TestCase {
 
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
-		$this->assertSame( 'wp-content/uploads/a.php', $evidence['file_1'] );
-		$this->assertSame( 'wp-content/uploads/b.php', $evidence['file_2'] );
+		$this->assertSame( 'wp-content/uploads/a.php', $evidence['files'][0]['path'] );
+		$this->assertSame( 'wp-content/uploads/b.php', $evidence['files'][1]['path'] );
 	}
 
 	public function test_a_missing_uploads_directory_is_skipped_not_passed(): void {
@@ -192,7 +192,7 @@ final class Uploads_Php_Check_Test extends TestCase {
 		$result = ( new Uploads_Php_Check() )->run( Context_Factory::for_tree_with_options( $this->tree, array( 'upload_path' => 'wp-content/files' ) ) );
 
 		$this->assertSame( Result::FINDINGS, $result->status() );
-		$this->assertSame( 'wp-content/files/2024/shell.php', $result->finding_list()[0]->evidence()['file_1'] );
+		$this->assertSame( 'wp-content/files/2024/shell.php', $result->finding_list()[0]->evidence()['files'][0]['path'] );
 	}
 
 	public function test_a_clean_uploads_directory_is_skipped_when_upload_path_could_not_be_read(): void {
@@ -224,8 +224,8 @@ final class Uploads_Php_Check_Test extends TestCase {
 		$finding = $result->finding_list()[0];
 		$this->assertSame( 'critical', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
-		$this->assertSame( 'wp-content/uploads/.htaccess', $finding->evidence()['file_1'] );
-		$this->assertSame( 'AddType application/x-httpd-php .jpg', $finding->evidence()['file_1_directive_1'] );
+		$this->assertSame( 'wp-content/uploads/.htaccess', $finding->evidence()['directives'][0]['path'] );
+		$this->assertSame( 'AddType application/x-httpd-php .jpg', $finding->evidence()['directives'][0]['directive'] );
 	}
 
 	/**
@@ -266,8 +266,8 @@ final class Uploads_Php_Check_Test extends TestCase {
 			$findings[ $finding->severity()->name() ] = $finding;
 		}
 
-		$this->assertSame( 'wp-content/uploads/2024/.user.ini', $findings['critical']->evidence()['file_1'] );
-		$this->assertSame( 'wp-content/uploads/2023/.user.ini', $findings['warning']->evidence()['file_1'] );
+		$this->assertSame( 'wp-content/uploads/2024/.user.ini', $findings['critical']->evidence()['directives'][0]['path'] );
+		$this->assertSame( 'wp-content/uploads/2023/.user.ini', $findings['warning']->evidence()['files'][0]['path'] );
 	}
 
 	public function test_a_symlink_inside_uploads_is_a_listed_gap_rather_than_a_pass(): void {

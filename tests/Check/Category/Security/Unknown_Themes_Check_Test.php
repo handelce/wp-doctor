@@ -65,8 +65,8 @@ final class Unknown_Themes_Check_Test extends TestCase {
 		$this->assertCount( 1, $findings );
 		$evidence = $findings[0]->evidence();
 		$flagged  = array();
-		for ( $rank = 1; isset( $evidence[ "entry_$rank" ] ); $rank++ ) {
-			$flagged[ $evidence[ "entry_$rank" ] ] = $evidence[ "entry_{$rank}_reason" ];
+		foreach ( $evidence['entries'] as $entry ) {
+			$flagged[ $entry['path'] ] = $entry['reason'];
 		}
 		$this->assertSame( $evidence['flagged'], count( $flagged ) );
 
@@ -95,9 +95,9 @@ final class Unknown_Themes_Check_Test extends TestCase {
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$this->assertSame( self::THEMES, $evidence['directory'] );
-		$this->assertSame( self::THEMES . '/example-assets', $evidence['entry_1'] );
-		$this->assertSame( 'folder with PHP but no style.css', $evidence['entry_1_reason'] );
-		$this->assertSame( 1, $evidence['entry_1_php_files'] );
+		$this->assertSame( self::THEMES . '/example-assets', $evidence['entries'][0]['path'] );
+		$this->assertSame( 'folder with PHP but no style.css', $evidence['entries'][0]['reason'] );
+		$this->assertSame( 1, $evidence['entries'][0]['php_files'] );
 		$this->assertStringContainsString( 'treat the site as compromised', $finding->fix() );
 	}
 

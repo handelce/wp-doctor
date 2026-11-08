@@ -136,11 +136,13 @@ final class Slow_Query_Index_Check implements Check {
 		if ( array() !== $failed ) {
 			$evidence['not_examined'] = self::listed( $failed );
 		}
-		foreach ( array_slice( $flagged, 0, Evidence::MAX_LISTED ) as $index => $row ) {
-			$rank                            = $index + 1;
-			$evidence[ "join_{$rank}_line" ] = $row[0];
-			$evidence[ "join_$rank" ]        = $row[1];
-			$evidence[ "join_{$rank}_plan" ] = $row[2];
+		$evidence['joins'] = array();
+		foreach ( array_slice( $flagged, 0, Evidence::MAX_LISTED ) as $row ) {
+			$evidence['joins'][] = array(
+				'line' => $row[0],
+				'join' => $row[1],
+				'plan' => $row[2],
+			);
 		}
 
 		return Result::findings(

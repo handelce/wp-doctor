@@ -78,14 +78,12 @@ final class Error_Log_Size_Check implements Runs_Without_Config {
 				$this->id(),
 				Severity::warning(),
 				'Large error_log files',
-				array_merge(
-					array(
-						'large_files'         => count( $large ),
-						'warning_above_bytes' => $warning_above,
-						'threshold_basis'     => $context->thresholds()->basis( $this->id() ),
-						'scan_incomplete'     => null !== $gap,
-					),
-					Evidence::files( Evidence::by_size( $large ) )
+				array(
+					'large_files'         => count( $large ),
+					'warning_above_bytes' => $warning_above,
+					'threshold_basis'     => $context->thresholds()->basis( $this->id() ),
+					'scan_incomplete'     => null !== $gap,
+					'files'               => Evidence::files( Evidence::by_size( $large ) ),
 				),
 				'Read the end of each file to find the repeating error and fix its cause, then empty the file '
 				. '(`truncate -s 0 <path>`). Turn on log rotation on the host if the file keeps growing.'

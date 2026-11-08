@@ -100,9 +100,9 @@ final class Autoload_Orphaned_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'likely', $finding->title() );
 		$this->assertSame( 4, $evidence['large_options_examined'] );
 		$this->assertArrayNotHasKey( 'large_autoloaded_options', $evidence );
-		$this->assertSame( 'removedplugin_cache', $evidence['option_1'] );
-		$this->assertSame( 899000, $evidence['option_1_bytes'] );
-		$this->assertSame( 'gone-plugin-data', $evidence['option_2'] );
+		$this->assertSame( 'removedplugin_cache', $evidence['options'][0]['name'] );
+		$this->assertSame( 899000, $evidence['options'][0]['bytes'] );
+		$this->assertSame( 'gone-plugin-data', $evidence['options'][1]['name'] );
 		$this->assertArrayNotHasKey( 'option_3', $evidence );
 		$this->assertStringContainsString( 'default', (string) $evidence['threshold_basis'] );
 		$this->assertNotSame( '', $finding->fix() );
@@ -118,7 +118,7 @@ final class Autoload_Orphaned_Check_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 'the largest 50; any smaller ones above the threshold were not examined', $evidence['large_options_examined'] );
-		$this->assertSame( 'removedplugin_part_1', $evidence['option_1'] );
+		$this->assertSame( 'removedplugin_part_1', $evidence['options'][0]['name'] );
 	}
 
 	public function test_an_option_starting_with_user_is_not_assumed_to_belong_to_core(): void {

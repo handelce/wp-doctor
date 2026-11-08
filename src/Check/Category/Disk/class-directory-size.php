@@ -121,24 +121,34 @@ final class Directory_Size {
 	}
 
 	/**
-	 * Evidence: the path, the totals, and the largest entries at the top with their bytes.
+	 * Path, bytes and file count, and what was not counted when the walk missed something.
 	 *
-	 * @since 0.2.0
+	 * @since 1.0.0
 	 *
-	 * @param string $key    Key prefix, such as cache_1, or empty for none.
-	 * @param int    $listed Number of entries at the top to list.
-	 * @return array<string, mixed>
+	 * @return array<string, string|int>
 	 */
-	public function evidence( string $key, int $listed ): array {
-		$prefix   = '' === $key ? '' : $key . '_';
-		$evidence = array(
-			$prefix . ( '' === $key ? 'directory' : 'path' ) => $this->path,
-			$prefix . 'bytes' => $this->bytes,
-			$prefix . 'files' => $this->files,
+	public function summary(): array {
+		$summary = array(
+			'path'  => $this->path,
+			'bytes' => $this->bytes,
+			'files' => $this->files,
 		);
 		if ( null !== $this->gap ) {
-			$evidence[ $prefix . 'not_counted' ] = $this->gap;
+			$summary['not_counted'] = $this->gap;
 		}
+
+		return $summary;
+	}
+
+	/**
+	 * The largest entries at the top of the directory, largest first.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $listed Number of entries to list.
+	 * @return array<int, array{path: string, bytes: int}>
+	 */
+	public function largest( int $listed ): array {
 		$children = $this->children;
 		uksort(
 			$children,
@@ -146,13 +156,14 @@ final class Directory_Size {
 				return array( $children[ $b ], (string) $a ) <=> array( $children[ $a ], (string) $b );
 			}
 		);
-		$rank = 0;
+		$largest = array();
 		foreach ( array_slice( $children, 0, $listed, true ) as $name => $bytes ) {
-			++$rank;
-			$evidence[ "{$prefix}largest_$rank" ]         = $this->path . '/' . $name;
-			$evidence[ "{$prefix}largest_{$rank}_bytes" ] = $bytes;
+			$largest[] = array(
+				'path'  => $this->path . '/' . $name,
+				'bytes' => $bytes,
+			);
 		}
 
-		return $evidence;
+		return $largest;
 	}
 }

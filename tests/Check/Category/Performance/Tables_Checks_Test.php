@@ -68,9 +68,9 @@ final class Tables_Checks_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'info', $finding->severity()->name() );
 		$this->assertSame( 3, $evidence['tables_with_prefix'] );
-		$this->assertSame( 'wptest_postmeta', $evidence['table_1'] );
-		$this->assertSame( 900 * self::MIB, $evidence['table_1_bytes'] );
-		$this->assertSame( 'wptest_options', $evidence['table_3'] );
+		$this->assertSame( 'wptest_postmeta', $evidence['tables'][0]['name'] );
+		$this->assertSame( 900 * self::MIB, $evidence['tables'][0]['bytes'] );
+		$this->assertSame( 'wptest_options', $evidence['tables'][2]['name'] );
 		$this->assertNotSame( '', $finding->fix() );
 	}
 
@@ -84,7 +84,7 @@ final class Tables_Checks_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 12, $evidence['tables_with_prefix'] );
-		$this->assertSame( 'wptest_table_10', $evidence['table_10'] );
+		$this->assertSame( 'wptest_table_10', $evidence['tables'][9]['name'] );
 		$this->assertArrayNotHasKey( 'table_11', $evidence );
 	}
 
@@ -98,7 +98,7 @@ final class Tables_Checks_Test extends TestCase {
 
 		$evidence = $result->finding_list()[0]->evidence();
 		$this->assertSame( 'at least 200; only the largest 200 were read', $evidence['tables_with_prefix'] );
-		$this->assertSame( 'wptest_table_1', $evidence['table_1'] );
+		$this->assertSame( 'wptest_table_1', $evidence['tables'][0]['name'] );
 	}
 
 	public function test_a_database_without_prefixed_tables_is_skipped_by_both_checks(): void {
@@ -136,7 +136,7 @@ final class Tables_Checks_Test extends TestCase {
 	public function test_a_decimal_size_from_the_server_is_accepted(): void {
 		list( $result ) = $this->run_with_tables( new Tables_Largest_Check(), array( 'wptest_posts' => '16384.0' ) );
 
-		$this->assertSame( 16384, $result->finding_list()[0]->evidence()['table_1_bytes'] );
+		$this->assertSame( 16384, $result->finding_list()[0]->evidence()['tables'][0]['bytes'] );
 	}
 
 	public function test_log_like_tables_above_one_hundred_mebibytes_are_a_warning(): void {
@@ -156,9 +156,9 @@ final class Tables_Checks_Test extends TestCase {
 		$evidence = $finding->evidence();
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertStringContainsString( 'likely', $finding->title() );
-		$this->assertSame( 'wptest_actionscheduler_actions', $evidence['table_1'] );
-		$this->assertSame( 'wptest_security_log', $evidence['table_2'] );
-		$this->assertSame( 'wptest_sessions', $evidence['table_3'] );
+		$this->assertSame( 'wptest_actionscheduler_actions', $evidence['tables'][0]['name'] );
+		$this->assertSame( 'wptest_security_log', $evidence['tables'][1]['name'] );
+		$this->assertSame( 'wptest_sessions', $evidence['tables'][2]['name'] );
 		$this->assertArrayNotHasKey( 'table_4', $evidence );
 		$this->assertStringContainsString( 'default', (string) $evidence['threshold_basis'] );
 	}

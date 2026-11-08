@@ -65,6 +65,13 @@ final class Secret_Leak_Test extends TestCase {
 							array(
 								"key $blob" => "value $blob",
 								'url'       => "mysql://user:{$this->fixture_secrets()[0]}@db.example.test/db",
+								'names'     => array( "listed $blob", 'plain' ),
+								'files'     => array(
+									array(
+										'path'   => "wp-content/$blob",
+										'reason' => "reason $blob",
+									),
+								),
 							),
 							"Run: mysql -p{$this->fixture_secrets()[0]}\n$blob"
 						)

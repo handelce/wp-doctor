@@ -151,7 +151,7 @@ final class Uploads_Php_Check implements Check {
 						'empty_index_stubs_ignored' => $stubs,
 					),
 					$context_evidence,
-					Evidence::files( Evidence::by_path( $found ) )
+					array( 'files' => Evidence::files( Evidence::by_path( $found ) ) )
 				),
 				'Uploads should hold media only. Open each file; if you did not put it there, treat the site as compromised: '
 				. 'remove the file, work out how it arrived from the access logs, change the passwords and the keys and salts, and '
@@ -160,13 +160,14 @@ final class Uploads_Php_Check implements Check {
 		}
 		if ( array() !== $running ) {
 			ksort( $running, SORT_STRING );
-			$evidence = array_merge( array( 'config_files' => count( $running ) ), $context_evidence );
-			$rank     = 0;
+			$evidence               = array_merge( array( 'config_files' => count( $running ) ), $context_evidence );
+			$evidence['directives'] = array();
 			foreach ( array_slice( $running, 0, Evidence::MAX_LISTED, true ) as $path => $lines ) {
-				++$rank;
-				$evidence[ "file_$rank" ] = (string) $path;
-				foreach ( $lines as $index => $line ) {
-					$evidence[ "file_{$rank}_directive_" . ( $index + 1 ) ] = $line;
+				foreach ( $lines as $line ) {
+					$evidence['directives'][] = array(
+						'path'      => (string) $path,
+						'directive' => $line,
+					);
 				}
 			}
 			$findings[] = new Finding(
@@ -186,7 +187,7 @@ final class Uploads_Php_Check implements Check {
 				array_merge(
 					array( 'settings_files' => count( $settings ) ),
 					$context_evidence,
-					Evidence::files( Evidence::by_path( $settings ) )
+					array( 'files' => Evidence::files( Evidence::by_path( $settings ) ) )
 				),
 				'A .user.ini or php.ini in uploads changes PHP settings for that directory and has no normal use there. Open each one; '
 				. 'remove it if you did not add it, and check the rest of the site for other changes made at the same time.'

@@ -106,8 +106,8 @@ final class Writable_Files_Check_Test extends TestCase {
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertSame( 1, $evidence['world_writable_files'] );
 		$this->assertSame( 1, $evidence['world_writable_directories'] );
-		$this->assertSame( 'config.php', $evidence['file_1'] );
-		$this->assertSame( 'wp-content/cache', $evidence['file_2'] );
+		$this->assertSame( 'config.php', $evidence['files'][0]['path'] );
+		$this->assertSame( 'wp-content/cache', $evidence['files'][1]['path'] );
 		$this->assertNotSame( '', $finding->fix() );
 	}
 

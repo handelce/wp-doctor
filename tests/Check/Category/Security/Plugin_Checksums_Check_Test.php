@@ -83,8 +83,8 @@ final class Plugin_Checksums_Check_Test extends TestCase {
 	private function problems(): array {
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 		$problems = array();
-		for ( $rank = 1; isset( $evidence[ "file_$rank" ] ); $rank++ ) {
-			$problems[ $evidence[ "file_$rank" ] ] = $evidence[ "file_{$rank}_problem" ];
+		foreach ( $evidence['files'] as $file ) {
+			$problems[ $file['path'] ] = $file['problem'];
 		}
 		$this->assertNotSame( array(), $problems );
 
@@ -114,7 +114,7 @@ final class Plugin_Checksums_Check_Test extends TestCase {
 		$this->assertSame( 1, $evidence['plugins_checked'] );
 		$this->assertSame( 1, $evidence['files_changed'] );
 		$this->assertSame( 1, $evidence['files_added'] );
-		$this->assertSame( 'example-forms 2.1.0', $evidence['file_1_plugin'] );
+		$this->assertSame( 'example-forms 2.1.0', $evidence['files'][0]['plugin'] );
 		$this->assertSame(
 			array(
 				self::PLUGINS . '/example-forms/inc/cache.php'  => 'added',
@@ -153,11 +153,12 @@ final class Plugin_Checksums_Check_Test extends TestCase {
 
 		$this->assertSame( 4, $evidence['plugins_not_checked'] );
 		$this->assertTrue( $evidence['scan_incomplete'] );
-		$listed = array( $evidence['not_checked_1'], $evidence['not_checked_2'], $evidence['not_checked_3'], $evidence['not_checked_4'] );
-		$this->assertStringStartsWith( 'example-down: the checksums could not be fetched', $listed[0] );
-		$this->assertSame( 'example-noversion: no plugin file with a Version header', $listed[1] );
-		$this->assertStringStartsWith( 'example-premium: version 3.0 is not published on wordpress.org', $listed[2] );
-		$this->assertStringStartsWith( 'single.php: a single-file plugin', $listed[3] );
+		$listed = $evidence['not_checked'];
+		$this->assertSame( array( 'example-down', 'example-noversion', 'example-premium', 'single.php' ), array_column( $listed, 'plugin' ) );
+		$this->assertStringStartsWith( 'the checksums could not be fetched', $listed[0]['reason'] );
+		$this->assertSame( 'no plugin file with a Version header', $listed[1]['reason'] );
+		$this->assertStringStartsWith( 'version 3.0 is not published on wordpress.org', $listed[2]['reason'] );
+		$this->assertStringStartsWith( 'a single-file plugin', $listed[3]['reason'] );
 	}
 
 	public function test_hello_dolly_is_compared_with_the_copy_in_the_installed_release(): void {

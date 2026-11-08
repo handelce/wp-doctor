@@ -57,7 +57,7 @@ final class Bin_Smoke_Test extends TestCase {
 			$found[ $finding['id'] ] = $finding['evidence'];
 		}
 		$this->assertArrayHasKey( 'config.debug.enabled', $found, 'wp-config.php in the web root was not read' );
-		$this->assertSame( 'wp/readme.html', $found['config.exposed.files']['path_1'] ?? null, 'The top of the core directory was not listed' );
+		$this->assertSame( 'wp/readme.html', $found['config.exposed.files']['paths'][0]['path'] ?? null, 'The top of the core directory was not listed' );
 	}
 
 	public function test_the_script_exits_three_for_a_bad_path(): void {

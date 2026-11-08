@@ -101,14 +101,41 @@ final class Markdown_Formatter implements Formatter {
 	private function finding_lines( Finding $finding ): array {
 		$lines = array( '### ' . Markdown_Escape::code( $finding->id() ) . ' ' . Markdown_Escape::text( $finding->title() ), '' );
 		foreach ( $finding->evidence() as $key => $value ) {
-			$shown   = is_bool( $value ) ? ( $value ? 'true' : 'false' ) : (string) $value;
-			$lines[] = '- ' . Markdown_Escape::line_start( (string) $key ) . ': ' . Markdown_Escape::code( $shown );
+			$label = '- ' . Markdown_Escape::line_start( (string) $key ) . ':';
+			if ( ! is_array( $value ) ) {
+				$lines[] = $label . ' ' . Markdown_Escape::code( self::shown( $value ) );
+				continue;
+			}
+			$lines[] = array() === $value ? $label . ' none' : $label;
+			foreach ( $value as $item ) {
+				if ( ! is_array( $item ) ) {
+					$lines[] = '  - ' . Markdown_Escape::code( self::shown( $item ) );
+					continue;
+				}
+				$fields = array();
+				foreach ( $item as $field => $field_value ) {
+					$fields[] = Markdown_Escape::text( (string) $field ) . ': ' . Markdown_Escape::code( self::shown( $field_value ) );
+				}
+				$lines[] = '  - ' . implode( ', ', $fields );
+			}
 		}
 		$lines[] = '';
 		$lines[] = '**Fix:**';
 		$lines[] = '';
 
 		return array_merge( $lines, Markdown_Escape::block( $finding->fix() ), array( '' ) );
+	}
+
+	/**
+	 * A scalar as text, with booleans spelled out.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string|int|float|bool $value Evidence scalar.
+	 * @return string
+	 */
+	private static function shown( $value ): string {
+		return is_bool( $value ) ? ( $value ? 'true' : 'false' ) : (string) $value;
 	}
 
 	/**

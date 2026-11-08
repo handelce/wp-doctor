@@ -307,19 +307,20 @@ final class Code_Directory {
 		if ( array() !== $gaps ) {
 			$evidence['not_examined'] = implode( '; ', $gaps );
 		}
-		$rank = 0;
+		$evidence['entries'] = array();
 		foreach ( array_slice( $flagged, 0, Evidence::MAX_LISTED, true ) as $inside => $reason ) {
-			++$rank;
 			$inside = (string) $inside;
 			$php    = isset( $this->entries[ $inside ] ) && $this->entries[ $inside ]->is_file() ? array( $this->entries[ $inside ] ) : $this->php_under( $inside );
 			$newest = 0;
 			foreach ( $php as $file ) {
 				$newest = max( $newest, $file->mtime() );
 			}
-			$evidence[ "entry_$rank" ]              = $this->directory . '/' . $inside;
-			$evidence[ "entry_{$rank}_reason" ]     = $reason;
-			$evidence[ "entry_{$rank}_php_files" ]  = count( $php );
-			$evidence[ "entry_{$rank}_php_newest" ] = gmdate( 'Y-m-d H:i', $newest ) . ' UTC';
+			$evidence['entries'][] = array(
+				'path'       => $this->directory . '/' . $inside,
+				'reason'     => $reason,
+				'php_files'  => count( $php ),
+				'php_newest' => gmdate( 'Y-m-d H:i', $newest ) . ' UTC',
+			);
 		}
 
 		return $evidence;

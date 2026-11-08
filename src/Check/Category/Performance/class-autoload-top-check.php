@@ -79,14 +79,15 @@ final class Autoload_Top_Check implements Check {
 			throw new \UnexpectedValueException( 'The largest-options query returned more rows than it asked for' );
 		}
 
-		$evidence = array();
-		foreach ( array_values( $rows ) as $index => $row ) {
+		$evidence = array( 'options' => array() );
+		foreach ( $rows as $row ) {
 			if ( ! isset( $row['option_name'], $row['size_bytes'] ) || 1 !== preg_match( '/^\d+$/', $row['size_bytes'] ) ) {
 				throw new \UnexpectedValueException( 'The largest-options query returned an unexpected row' );
 			}
-			$rank                               = $index + 1;
-			$evidence[ "option_$rank" ]         = $row['option_name'];
-			$evidence[ "option_{$rank}_bytes" ] = (int) $row['size_bytes'];
+			$evidence['options'][] = array(
+				'name'  => $row['option_name'],
+				'bytes' => (int) $row['size_bytes'],
+			);
 		}
 
 		return Result::findings(

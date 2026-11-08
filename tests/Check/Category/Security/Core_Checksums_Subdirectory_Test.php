@@ -79,7 +79,7 @@ final class Core_Checksums_Subdirectory_Test extends TestCase {
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
 		$this->assertSame( 1, $evidence['modified_files'] );
-		$this->assertSame( 'wp/wp-includes/functions.php', $evidence['modified_1'] );
+		$this->assertSame( 'wp/wp-includes/functions.php', $evidence['modified'][0] );
 	}
 
 	public function test_a_missing_core_file_is_named_with_its_path_from_the_web_root(): void {
@@ -88,7 +88,7 @@ final class Core_Checksums_Subdirectory_Test extends TestCase {
 		$evidence = $this->run_check()->finding_list()[0]->evidence();
 
 		$this->assertSame( 1, $evidence['missing_files'] );
-		$this->assertSame( 'wp/wp-login.php', $evidence['missing_1'] );
+		$this->assertSame( 'wp/wp-login.php', $evidence['missing'][0] );
 	}
 
 	public function test_a_file_added_to_a_core_directory_in_the_subdirectory_is_critical(): void {
@@ -97,7 +97,7 @@ final class Core_Checksums_Subdirectory_Test extends TestCase {
 		$finding = $this->run_check()->finding_list()[0];
 
 		$this->assertSame( 'critical', $finding->severity()->name() );
-		$this->assertSame( 'wp/wp-includes/class-planted.php', $finding->evidence()['unknown_1'] );
+		$this->assertSame( 'wp/wp-includes/class-planted.php', $finding->evidence()['unknown'][0] );
 	}
 
 	public function test_unknown_php_at_the_top_of_the_core_directory_and_of_the_web_root_are_both_warnings(): void {
@@ -108,13 +108,13 @@ final class Core_Checksums_Subdirectory_Test extends TestCase {
 
 		$this->assertSame( 'warning', $finding->severity()->name() );
 		$this->assertSame( 2, $finding->evidence()['unknown_php_in_root'] );
-		$this->assertSame( 'other.php', $finding->evidence()['unknown_1'] );
-		$this->assertSame( 'wp/planted.php', $finding->evidence()['unknown_2'] );
+		$this->assertSame( 'other.php', $finding->evidence()['unknown'][0] );
+		$this->assertSame( 'wp/planted.php', $finding->evidence()['unknown'][1] );
 	}
 
 	public function test_index_php_in_the_core_directory_is_still_compared(): void {
 		$this->tree->file( 'wp/index.php', '<?php // changed' );
 
-		$this->assertSame( 'wp/index.php', $this->run_check()->finding_list()[0]->evidence()['modified_1'] );
+		$this->assertSame( 'wp/index.php', $this->run_check()->finding_list()[0]->evidence()['modified'][0] );
 	}
 }
