@@ -12,6 +12,7 @@ use WP_Doctor\Report\Result;
 use WP_Doctor\Site\Config_Parser;
 use WP_Doctor\Site\Site_Locator;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Config_Permissions_Check_Test extends TestCase {
@@ -38,6 +39,7 @@ final class Config_Permissions_Check_Test extends TestCase {
 	 * @return Result
 	 */
 	private function run_with_mode( int $mode ): Result {
+		File_Modes::require_unix_modes();
 		$context = Context_Factory::for_tree( $this->tree );
 		chmod( $this->tree->site() . '/wp-config.php', $mode );
 

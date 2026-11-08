@@ -33,6 +33,19 @@ function wpd_build_fail( string $message ): void {
 }
 
 /**
+ * A path with backslashes turned into slashes, the separator inside a phar
+ * and in the class map.
+ *
+ * @since 0.1.0
+ *
+ * @param string $path Path as the platform writes it.
+ * @return string
+ */
+function wpd_build_slashes( string $path ): string {
+	return str_replace( '\\', '/', $path );
+}
+
+/**
  * Reads the --name=value options this tool accepts.
  *
  * @since 0.1.0
@@ -86,7 +99,7 @@ function wpd_build_files( string $source, string $directory ): array {
 	$files    = array();
 	$iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( "$source/$directory", FilesystemIterator::SKIP_DOTS ) );
 	foreach ( $iterator as $file ) {
-		$files[] = substr( $file->getPathname(), strlen( "$source/" ) );
+		$files[] = substr( wpd_build_slashes( $file->getPathname() ), strlen( "$source/" ) );
 	}
 	sort( $files );
 
@@ -110,6 +123,7 @@ function wpd_build_class_map( string $source ): array {
 	$all = require $classmap;
 	$map = array();
 	foreach ( $all as $class => $path ) {
+		$path = wpd_build_slashes( $path );
 		if ( 0 === strpos( $path, "$source/src/" ) ) {
 			$map[ $class ] = substr( $path, strlen( "$source/" ) );
 		}
@@ -155,6 +169,7 @@ if ( filter_var( ini_get( 'phar.readonly' ), FILTER_VALIDATE_BOOLEAN ) ) {
 
 $options = wpd_build_options( array_slice( $argv, 1 ) );
 $source  = realpath( $options['source'] );
+$source  = false === $source ? false : wpd_build_slashes( $source );
 if ( false === $source || ! is_file( "$source/bin/wp-doctor" ) ) {
 	wpd_build_fail( "{$options['source']} is not a wp-doctor checkout" );
 }

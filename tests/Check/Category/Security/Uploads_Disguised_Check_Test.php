@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Security\Uploads_Disguised_Check;
 use WP_Doctor\Report\Result;
 use WP_Doctor\Tests\Support\Context_Factory;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class Uploads_Disguised_Check_Test extends TestCase {
@@ -190,9 +191,7 @@ final class Uploads_Disguised_Check_Test extends TestCase {
 	}
 
 	public function test_a_clean_result_is_a_skip_when_an_earlier_walk_met_an_unreadable_directory(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'wp-content/uploads/2024/photo.jpg', "\xFF\xD8\xFF\xE0 binary data" );
 		$this->tree->file( 'wp-content/uploads/zz/shell.php.jpg', '<?php // inert test marker' );
 		chmod( $this->tree->site() . '/wp-content/uploads/zz', 0000 );

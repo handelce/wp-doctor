@@ -1,3 +1,7 @@
+# Text files are checked out with LF endings on every platform, so fixtures
+# and the data files read the same on Windows.
+* text=auto eol=lf
+
 # Left out of release archives and Composer installs, which need only
 # bin/, src/, data/, docs/ and the top-level notices.
 /.editorconfig      export-ignore

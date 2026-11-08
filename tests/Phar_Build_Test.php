@@ -13,7 +13,11 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Application;
 use WP_Doctor\Check\Category\Security\Rogue_Admin_Indicators;
 
+use function WP_Doctor\esc_cli;
+
 final class Phar_Build_Test extends TestCase {
+
+	private const TIMEOUT_SECONDS = 120;
 
 	/**
 	 * Directory holding the phar built for this class.
@@ -29,14 +33,22 @@ final class Phar_Build_Test extends TestCase {
 	 */
 	private static $phar = '';
 
+	/**
+	 * What the build printed, shown when it wrote no phar.
+	 *
+	 * @var string
+	 */
+	private static $build_output = '';
+
 	public static function setUpBeforeClass(): void {
 		if ( ! extension_loaded( 'phar' ) ) {
 			return;
 		}
 		self::$directory = sys_get_temp_dir() . '/wpd-phar-' . bin2hex( random_bytes( 6 ) );
 		mkdir( self::$directory );
-		self::$phar = self::$directory . '/wp-doctor.phar';
-		self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . self::$phar ) );
+		self::$phar         = self::$directory . '/wp-doctor.phar';
+		$build              = self::run_php( array( '-d', 'phar.readonly=0', self::build_script(), '--output=' . self::$phar ) );
+		self::$build_output = "exit {$build['exit']}: {$build['stdout']}{$build['stderr']}";
 	}
 
 	public static function tearDownAfterClass(): void {
@@ -53,7 +65,7 @@ final class Phar_Build_Test extends TestCase {
 		if ( ! extension_loaded( 'phar' ) ) {
 			$this->markTestSkipped( 'The phar extension is not loaded, so no phar can be built.' );
 		}
-		$this->assertFileExists( self::$phar, 'The build did not write a phar' );
+		$this->assertFileExists( self::$phar, 'The build did not write a phar; it printed ' . self::$build_output );
 	}
 
 	public function test_the_phar_prints_the_version(): void {
@@ -99,7 +111,7 @@ final class Phar_Build_Test extends TestCase {
 		}
 		$sources = array();
 		foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( "$root/src", \FilesystemIterator::SKIP_DOTS ) ) as $file ) {
-			$sources[] = substr( $file->getPathname(), strlen( "$root/" ) );
+			$sources[] = str_replace( '\\', '/', substr( $file->getPathname(), strlen( "$root/" ) ) );
 		}
 		$expected = array_merge(
 			$sources,
@@ -136,37 +148,55 @@ final class Phar_Build_Test extends TestCase {
 	}
 
 	/**
-	 * Runs PHP with the given arguments, without Xdebug.
+	 * Runs PHP with the given arguments, without Xdebug. Output goes to files,
+	 * since a pipe left unread can block the child on Windows.
 	 *
 	 * @param array<int, string> $args Arguments after the PHP binary.
 	 * @return array{exit: int, stdout: string, stderr: string}
+	 * @throws \RuntimeException When PHP cannot start or runs past the time limit.
 	 */
 	private static function run_php( array $args ): array {
 		$command = escapeshellarg( PHP_BINARY ) . ' -d xdebug.mode=off';
 		foreach ( $args as $arg ) {
 			$command .= ' ' . escapeshellarg( $arg );
 		}
+		$out     = (string) tempnam( sys_get_temp_dir(), 'wpd-out' );
+		$err     = (string) tempnam( sys_get_temp_dir(), 'wpd-err' );
 		$pipes   = array();
 		$process = proc_open( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Runs the built phar in its own PHP process.
 			$command,
 			array(
-				1 => array( 'pipe', 'w' ),
-				2 => array( 'pipe', 'w' ),
+				1 => array( 'file', $out, 'w' ),
+				2 => array( 'file', $err, 'w' ),
 			),
-			$pipes
+			$pipes,
+			null,
+			null,
+			array( 'bypass_shell' => true )
 		);
 		if ( ! is_resource( $process ) ) {
 			throw new \RuntimeException( 'Could not start PHP' );
 		}
-		$stdout = (string) stream_get_contents( $pipes[1] );
-		$stderr = (string) stream_get_contents( $pipes[2] );
-		fclose( $pipes[1] );
-		fclose( $pipes[2] );
-
-		return array(
-			'exit'   => proc_close( $process ),
-			'stdout' => $stdout,
-			'stderr' => $stderr,
+		$deadline = microtime( true ) + self::TIMEOUT_SECONDS;
+		$status   = proc_get_status( $process );
+		while ( $status['running'] ) {
+			if ( microtime( true ) > $deadline ) {
+				proc_terminate( $process );
+				proc_close( $process );
+				throw new \RuntimeException( esc_cli( 'PHP did not finish within ' . self::TIMEOUT_SECONDS . " seconds: $command" ) );
+			}
+			usleep( 20000 );
+			$status = proc_get_status( $process );
+		}
+		proc_close( $process );
+		$result = array(
+			'exit'   => (int) $status['exitcode'],
+			'stdout' => (string) file_get_contents( $out ),
+			'stderr' => (string) file_get_contents( $err ),
 		);
+		unlink( $out );
+		unlink( $err );
+
+		return $result;
 	}
 }

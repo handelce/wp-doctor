@@ -56,9 +56,10 @@ On macOS, use `shasum -a 256 -c wp-doctor.phar.sha256`.
 
 ## Platforms
 
-Linux and macOS are tested. Windows is not supported yet: the two file
-permission checks skip there, and the rest has only a continuous-integration
-run that is allowed to fail.
+Linux, macOS and Windows. Continuous integration runs the tests on Linux
+with PHP 7.2 to 8.4 and on Windows with PHP 8.3. On Windows the two file
+permission checks (`config.perms.wpconfig` and `config.perms.writable`) skip,
+since Windows has no Unix file modes.
 
 ## Output formats
 

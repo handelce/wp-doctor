@@ -226,7 +226,7 @@ final class Context_Directories_Test extends TestCase {
 
 	public function test_a_literal_content_directory_written_through_a_symlinked_root_is_followed(): void {
 		$alias = $this->tree->outside() . '/public_html';
-		symlink( $this->tree->site(), $alias );
+		Temp_Tree::symlink( $this->tree->site(), $alias );
 		$this->tree->file( 'wp-content/object-cache.php', '<?php' );
 		$this->assertSame( realpath( $this->tree->site() ), realpath( $alias ) );
 

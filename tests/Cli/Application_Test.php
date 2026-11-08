@@ -20,6 +20,7 @@ use WP_Doctor\Report\Result;
 use WP_Doctor\Report\Severity;
 use WP_Doctor\Tests\Support\Buffer_Console;
 use WP_Doctor\Tests\Support\Fake_Checksum_Source;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Recording_Driver;
 use WP_Doctor\Tests\Support\Stub_Check;
 use WP_Doctor\Tests\Support\Temp_Tree;
@@ -707,13 +708,14 @@ final class Application_Test extends TestCase {
 		);
 
 		list( $code, $out ) = $this->run_app( array( 'scan', $this->fixture( 'plain' ), "--config=$path", '--format=json' ), $registry );
-		$evidence           = json_decode( $out, true )['findings'][0]['evidence'];
+		$report             = json_decode( $out, true );
+		$evidence           = $report['findings'][0]['evidence'];
 
 		$this->assertSame( 0, $code );
 		$this->assertSame( 7, $evidence['warning'] );
 		$this->assertSame( 9, $evidence['critical'] );
 		$this->assertSame( 'set in ' . $path, $evidence['basis'] );
-		$this->assertStringContainsString( 'Thresholds from ' . $path . ' apply to: perf.autoload.size.', $out );
+		$this->assertContains( 'Thresholds from ' . $path . ' apply to: perf.autoload.size.', $report['notices'] );
 	}
 
 	public function test_a_config_naming_an_unknown_check_or_an_unsupported_level_exits_three(): void {
@@ -929,9 +931,7 @@ final class Application_Test extends TestCase {
 	}
 
 	public function test_an_unreadable_wp_config_gives_a_partial_scan_rather_than_stopping(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree = new Temp_Tree();
 		$this->tree->file( 'wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );
 		$config = $this->tree->file( 'wp-config.php', "<?php\ndefine( 'DB_PASSWORD', 'example-password' );\n\$table_prefix = 'wp_';\n" );

@@ -14,7 +14,10 @@ use WP_Doctor\Site\Config;
 use WP_Doctor\Site\Config_Parser;
 use WP_Doctor\Site\Site_Locator;
 use WP_Doctor\Site\Site_Not_Found_Exception;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
+
+use function WP_Doctor\real_path;
 
 final class Site_Locator_Test extends TestCase {
 
@@ -29,8 +32,8 @@ final class Site_Locator_Test extends TestCase {
 	public function test_a_site_with_its_config_in_the_root_is_located(): void {
 		$site = $this->locator()->locate( $this->fixture( 'plain' ) );
 
-		$this->assertSame( realpath( $this->fixture( 'plain' ) ), $site->root() );
-		$this->assertSame( realpath( $this->fixture( 'plain' ) ) . '/wp-config.php', $site->config_path() );
+		$this->assertSame( real_path( $this->fixture( 'plain' ) ), $site->root() );
+		$this->assertSame( real_path( $this->fixture( 'plain' ) ) . '/wp-config.php', $site->config_path() );
 		$this->assertSame( '6.5.2', $site->wp_version() );
 	}
 
@@ -53,14 +56,14 @@ final class Site_Locator_Test extends TestCase {
 	public function test_a_config_one_directory_above_the_core_is_found(): void {
 		$site = $this->locator()->locate( $this->fixture( 'config-above/public' ) );
 
-		$this->assertSame( realpath( $this->fixture( 'config-above' ) ) . '/wp-config.php', $site->config_path() );
-		$this->assertSame( realpath( $this->fixture( 'config-above/public' ) ), $site->root() );
+		$this->assertSame( real_path( $this->fixture( 'config-above' ) ) . '/wp-config.php', $site->config_path() );
+		$this->assertSame( real_path( $this->fixture( 'config-above/public' ) ), $site->root() );
 	}
 
 	public function test_a_relative_path_with_dot_segments_is_resolved(): void {
 		$site = $this->locator()->locate( $this->fixture( 'plain' ) . '/wp-content/..' );
 
-		$this->assertSame( realpath( $this->fixture( 'plain' ) ), $site->root() );
+		$this->assertSame( real_path( $this->fixture( 'plain' ) ), $site->root() );
 	}
 
 	/**
@@ -222,9 +225,7 @@ final class Site_Locator_Test extends TestCase {
 	}
 
 	public function test_a_config_the_scanning_account_cannot_read_is_located_with_a_reason(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$tree = new Temp_Tree();
 		try {
 			$tree->file( 'wp-includes/version.php', "<?php\n\$wp_version = '6.5.2';\n" );

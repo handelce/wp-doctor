@@ -7,6 +7,7 @@ namespace WP_Doctor\Tests\Fs;
 use PHPUnit\Framework\TestCase;
 use WP_Doctor\Fs\File_Scanner;
 use WP_Doctor\Fs\Walk;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class File_Scanner_Cache_Test extends TestCase {
@@ -121,9 +122,7 @@ final class File_Scanner_Cache_Test extends TestCase {
 	}
 
 	public function test_a_replayed_walk_of_a_directory_with_an_unreadable_subdirectory_is_incomplete(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'wp-content/uploads/zz/shell.php' );
 		chmod( $this->tree->site() . '/wp-content/uploads/zz', 0000 );
 		$scanner = new File_Scanner( $this->tree->site() );

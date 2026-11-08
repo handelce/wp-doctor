@@ -15,6 +15,7 @@ use WP_Doctor\Fs\File_Scanner;
 use WP_Doctor\Fs\File_Too_Large_Exception;
 use WP_Doctor\Fs\Path_Unavailable_Exception;
 use WP_Doctor\Fs\Walk;
+use WP_Doctor\Tests\Support\File_Modes;
 use WP_Doctor\Tests\Support\Temp_Tree;
 
 final class File_Scanner_Test extends TestCase {
@@ -72,6 +73,7 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_an_entry_reports_size_type_and_permissions(): void {
+		File_Modes::require_unix_modes();
 		$path = $this->tree->file( 'dir/file.txt', '12345' );
 		chmod( $path, 0640 );
 
@@ -318,9 +320,7 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_an_unreadable_subdirectory_is_skipped_and_reported(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'open/a.txt' );
 		$this->tree->file( 'closed/b.txt' );
 		chmod( $this->tree->site() . '/closed', 0000 );
@@ -422,9 +422,7 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_an_unreadable_directory_makes_the_walk_incomplete(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'open/a.txt' );
 		$this->tree->file( 'closed/b.txt' );
 		chmod( $this->tree->site() . '/closed', 0000 );
@@ -448,9 +446,7 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_presence_tells_a_missing_file_from_one_that_was_not_examined(): void {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Permissions are not enforced for root.' );
-		}
+		File_Modes::require_enforced_modes();
 		$this->tree->file( 'here.txt' );
 		$this->tree->file( 'skipped/file.txt' );
 		$this->tree->file( 'closed/file.txt' );
