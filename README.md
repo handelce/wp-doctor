@@ -12,13 +12,13 @@ Yoast SEO, Contact Form 7 and a few other plugins, run with its database:
 
 ```
 $ php wp-doctor.phar scan /var/www/example.test --offline
-wp-doctor 0.2.0, WordPress 7.1.4
+wp-doctor 0.3.0, WordPress 7.1.4
 
 WARNING (5)
   [perf.cron.overdue] Scheduled events are overdue
     overdue_events: 14
     scheduled_events: 14
-    oldest_overdue_seconds: 313718
+    oldest_overdue_seconds: 314707
     hook_1: action_scheduler_run_queue
     ...
     Fix: WordPress only runs scheduled events when someone visits the site. Add a system cron job that requests wp-cron.php every few minutes (or runs `wp cron event run --due-now`), ...

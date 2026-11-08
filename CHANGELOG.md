@@ -5,7 +5,7 @@ Notable changes to wp-doctor, by release. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0.0, any
 minor release may change the command-line options or the JSON report shape.
 
-## [Unreleased]
+## [0.3.0] - 2026-11-08
 
 ### Added
 
@@ -140,7 +140,7 @@ First release.
 - For the database checks: MySQL 5.6.5 or MariaDB 10.0 or later.
 - Linux or macOS. Windows is not supported yet.
 
-[Unreleased]: https://github.com/handelce/wp-doctor/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.2.0
 [0.1.1]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.1
 [0.1.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.0

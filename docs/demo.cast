@@ -30,7 +30,7 @@
 [2.18,"o","n"]
 [2.24,"o","e"]
 [2.84,"o","\r\n"]
-[2.88,"o","\u001b[1mwp-doctor 0.2.0, WordPress 6.5.2\u001b[0m\r\n"]
+[2.88,"o","\u001b[1mwp-doctor 0.3.0, WordPress 6.5.2\u001b[0m\r\n"]
 [2.92,"o","\r\n"]
 [2.96,"o","\u001b[1m\u001b[31mCRITICAL (3)\u001b[0m\r\n"]
 [3,"o","  [config.salts.default] Authentication keys and salts are missing, sample text or repeated\r\n"]
