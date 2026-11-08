@@ -17,6 +17,7 @@
 ## Layout
 
 ```
+action.yml                         GitHub Action: downloads a release phar, scans, uploads the report
 bin/wp-doctor                      entry point (thin: builds the Application, runs it)
 src/
   class-application.php            argument parsing, wiring, exit code

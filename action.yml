@@ -1,0 +1,146 @@
+name: wp-doctor scan
+description: Scan a WordPress site's files with wp-doctor and upload the report
+author: Handel Emezue
+branding:
+  icon: activity
+  color: blue
+
+inputs:
+  path:
+    description: Directory holding the site, relative to the workspace (the directory with wp-includes, or the web root when core is in a subdirectory)
+    required: false
+    default: "."
+  version:
+    description: wp-doctor release to download, such as v0.3.0. Empty for the release this action is used at, or the latest one when it is used at a branch or commit
+    required: false
+    default: ""
+  phar:
+    description: Path to a wp-doctor.phar to run instead of downloading one
+    required: false
+    default: ""
+  fail-on:
+    description: "Fail the step on findings of this severity or above: critical, warning or never. A tool error always fails"
+    required: false
+    default: critical
+  args:
+    description: More options for wp-doctor scan, such as --offline or --exclude=wp-content/cache/**
+    required: false
+    default: ""
+  php-version:
+    description: PHP version to run wp-doctor with (7.2 or later)
+    required: false
+    default: "8.3"
+  artifact-name:
+    description: Name of the uploaded report artifact
+    required: false
+    default: wp-doctor-report
+
+outputs:
+  exit-code:
+    description: "wp-doctor's exit code: 0 nothing above info, 1 warnings, 2 critical findings, 3 tool error"
+    value: ${{ steps.scan.outputs.exit-code }}
+  report:
+    description: Path of the JSON report
+    value: ${{ steps.scan.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: mysqli, json, phar
+        coverage: none
+        tools: none
+
+    - id: phar
+      shell: bash
+      env:
+        WPD_PHAR: ${{ inputs.phar }}
+        WPD_VERSION: ${{ inputs.version }}
+        WPD_ACTION_REF: ${{ github.action_ref }}
+        WPD_DIR: ${{ runner.temp }}/wp-doctor
+      run: |
+        set -euo pipefail
+        if [ -n "$WPD_PHAR" ]; then
+          if [ ! -f "$WPD_PHAR" ]; then
+            echo "::error::phar input $WPD_PHAR is not a file"
+            exit 1
+          fi
+          echo "path=$WPD_PHAR" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        version="$WPD_VERSION"
+        if [ -z "$version" ] && printf '%s' "$WPD_ACTION_REF" | grep -Eqx 'v[0-9]+\.[0-9]+\.[0-9]+'; then
+          version="$WPD_ACTION_REF"
+        fi
+        if [ -z "$version" ]; then
+          base="https://github.com/handelce/wp-doctor/releases/latest/download"
+        elif printf '%s' "$version" | grep -Eqx 'v[0-9]+\.[0-9]+\.[0-9]+'; then
+          base="https://github.com/handelce/wp-doctor/releases/download/$version"
+        else
+          echo "::error::version input $version is not a release tag of the form vX.Y.Z"
+          exit 1
+        fi
+        mkdir -p "$WPD_DIR"
+        cd "$WPD_DIR"
+        curl -fsSL --retry 3 -o wp-doctor.phar "$base/wp-doctor.phar"
+        curl -fsSL --retry 3 -o wp-doctor.phar.sha256 "$base/wp-doctor.phar.sha256"
+        if command -v sha256sum >/dev/null 2>&1; then
+          sha256sum -c wp-doctor.phar.sha256
+        else
+          shasum -a 256 -c wp-doctor.phar.sha256
+        fi
+        echo "path=$WPD_DIR/wp-doctor.phar" >> "$GITHUB_OUTPUT"
+
+    - id: scan
+      shell: bash
+      env:
+        WPD_PHAR: ${{ steps.phar.outputs.path }}
+        WPD_PATH: ${{ inputs.path }}
+        WPD_ARGS: ${{ inputs.args }}
+        WPD_FAIL_ON: ${{ inputs.fail-on }}
+        WPD_OUT: ${{ runner.temp }}/wp-doctor-report
+      run: |
+        set -uo pipefail
+        case "$WPD_FAIL_ON" in
+          critical|warning|never) ;;
+          *) echo "::error::fail-on must be critical, warning or never, not $WPD_FAIL_ON"; exit 1 ;;
+        esac
+        set -f
+        read -r -a extra <<< "$WPD_ARGS"
+        set +f
+        mkdir -p "$WPD_OUT"
+        php "$WPD_PHAR" --version
+        php "$WPD_PHAR" scan "$WPD_PATH" --format=json ${extra[@]+"${extra[@]}"} > "$WPD_OUT/wp-doctor.json"
+        code=$?
+        php "$WPD_PHAR" scan "$WPD_PATH" --format=markdown ${extra[@]+"${extra[@]}"} > "$WPD_OUT/wp-doctor.md" || true
+        cat "$WPD_OUT/wp-doctor.md" >> "$GITHUB_STEP_SUMMARY"
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        echo "report=$WPD_OUT/wp-doctor.json" >> "$GITHUB_OUTPUT"
+        echo "dir=$WPD_OUT" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.scan.outputs.dir }}
+        if-no-files-found: error
+
+    - shell: bash
+      env:
+        WPD_CODE: ${{ steps.scan.outputs.exit-code }}
+        WPD_FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -euo pipefail
+        if [ "$WPD_CODE" = 3 ]; then
+          echo "::error::wp-doctor could not complete the scan (exit code 3); see the report and the step log"
+          exit 1
+        fi
+        if [ "$WPD_FAIL_ON" = warning ] && [ "$WPD_CODE" -ge 1 ]; then
+          echo "::error::wp-doctor found warnings or critical findings"
+          exit 1
+        fi
+        if [ "$WPD_FAIL_ON" = critical ] && [ "$WPD_CODE" -ge 2 ]; then
+          echo "::error::wp-doctor found critical findings"
+          exit 1
+        fi

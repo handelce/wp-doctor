@@ -68,6 +68,39 @@ composer build
 sha256sum build/wp-doctor.phar
 ```
 
+## GitHub Action
+
+If the site's files are in a repository, the action scans them in a workflow.
+It downloads the release phar named by the tag you use and checks its
+checksum, writes the Markdown report to the job summary, and uploads the JSON
+and Markdown reports as an artifact. By default it fails the job on critical
+findings; set `fail-on` to `warning` or `never` to change that.
+
+```yaml
+name: wp-doctor
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: handelce/wp-doctor@vX.Y.Z
+        with:
+          path: public_html
+          fail-on: critical
+```
+
+The database checks skip unless the job can reach the database. To give it,
+add `args: --db-from-env` and set `WPD_DB_HOST`, `WPD_DB_NAME`, `WPD_DB_USER`
+and `WPD_DB_PASSWORD` from secrets in the step's `env`. Other inputs:
+`version` (a release such as `v0.3.0`), `args` (more options, such as
+`--offline`), `php-version` and `artifact-name`. Without `--offline` the scan
+fetches checksums from wordpress.org.
+
 ## Platforms
 
 Linux, macOS and Windows. Continuous integration runs the tests on Linux

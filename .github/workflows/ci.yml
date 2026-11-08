@@ -24,6 +24,47 @@ jobs:
           coverage: none
       - run: composer validate --strict
 
+  action:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+      - run: composer install --prefer-dist --no-progress --no-interaction
+      - run: composer build
+      - id: built
+        uses: ./
+        with:
+          path: tests/fixtures/sites/plain
+          phar: build/wp-doctor.phar
+          args: --offline
+          fail-on: never
+          artifact-name: wp-doctor-report-built-${{ matrix.os }}
+      - id: released
+        uses: ./
+        with:
+          path: tests/fixtures/sites/plain
+          version: v0.2.0
+          args: --offline
+          fail-on: never
+          artifact-name: wp-doctor-report-released-${{ matrix.os }}
+      - env:
+          BUILT_CODE: ${{ steps.built.outputs.exit-code }}
+          BUILT_REPORT: ${{ steps.built.outputs.report }}
+          RELEASED_CODE: ${{ steps.released.outputs.exit-code }}
+        shell: bash
+        run: |
+          test "$BUILT_CODE" = 2
+          test "$RELEASED_CODE" = 2
+          php -r '$r = json_decode( file_get_contents( getenv( "BUILT_REPORT" ) ), true ); exit( isset( $r["tool"]["version"] ) ? 0 : 1 );'
+
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15

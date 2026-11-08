@@ -26,6 +26,10 @@ minor release may change the command-line options or the JSON report shape.
   and reports joins between columns whose types or character sets differ, so
   the server reads a table in full or refuses the statement. The file must lie
   outside the site, and the report names statements only by line number.
+- A GitHub Action: `uses: handelce/wp-doctor@vX.Y.Z` downloads that release's
+  phar, checks its checksum, scans the site in the repository, writes the
+  report to the job summary, uploads the JSON and Markdown reports, and fails
+  the job on critical findings, warnings or never, as `fail-on` says.
 
 ### Changed
 
