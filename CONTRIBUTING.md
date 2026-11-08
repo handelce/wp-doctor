@@ -74,7 +74,9 @@ Keep them small and focused. `composer test`, `composer analyse`, and
 ## Releasing
 
 1. Set `Application::VERSION`, and turn the `[Unreleased]` section of
-   `CHANGELOG.md` into a dated section for the version.
+   `CHANGELOG.md` into a dated section for the version. Run
+   `php tools/record-demo.php` to record the demo in `docs/demo.svg` again
+   with the new version; it needs Node.js.
 2. Once CI passes on that commit, tag it `vX.Y.Z` and push the tag.
 
 The Release workflow builds `wp-doctor.phar`, runs it on PHP 7.2 and 8.4,

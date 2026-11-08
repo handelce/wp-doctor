@@ -7,21 +7,49 @@ compromised, with a fix for every finding.
 > Status: early releases (0.x); options and the JSON shape may still change.
 > Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
-```
-$ php wp-doctor.phar scan /var/www/example.test
-wp-doctor 0.1.0, WordPress 6.5.2
+An excerpt of a real scan of a WordPress 7.1.4 test site with WooCommerce,
+Yoast SEO, Contact Form 7 and a few other plugins, run with its database:
 
-CRITICAL (1)
-  [config.salts.default] Authentication keys and salts are missing, sample text or repeated
-    NONCE_KEY: not defined in wp-config.php
-    Fix: Generate fresh random values at https://api.wordpress.org/secret-key/1.1/salt/ and paste all eight define() lines over the old ones in wp-config.php. Everyone is logged out once when you do.
-
-WARNING (1)
-  [config.perms.wpconfig] wp-config.php can be read or changed by other accounts on the server
-    path: wp-config.php
-    mode: 0644
-    Fix: Run `chmod 640 wp-config.php`, or `chmod 600 wp-config.php` when the web server runs as the file owner. ...
 ```
+$ php wp-doctor.phar scan /var/www/example.test --offline
+wp-doctor 0.2.0, WordPress 7.1.4
+
+WARNING (5)
+  [perf.cron.overdue] Scheduled events are overdue
+    overdue_events: 14
+    scheduled_events: 14
+    oldest_overdue_seconds: 313718
+    hook_1: action_scheduler_run_queue
+    ...
+    Fix: WordPress only runs scheduled events when someone visits the site. Add a system cron job that requests wp-cron.php every few minutes (or runs `wp cron event run --due-now`), ...
+  [sec.updates.outdated] Updates are available and not yet installed
+    plugin_updates: 2
+    theme_updates: 3
+    plugin_1: akismet/akismet.php -> 5.7.2
+    plugin_2: contact-form-7/wp-contact-form-7.php -> 6.2.4.1
+    ...
+  [sec.users.admins] Administrator accounts with an email address that is likely not a real person's
+    admin_1: siteowner
+    admin_1_email: owner@example.test
+    admin_1_reason: placeholder email domain
+    ...
+
+INFO (9)
+  [sec.wpcron.persistence] Scheduled events are likely left by plugins that were removed
+    hooks_scheduled: 14
+    hooks_not_named: 1
+    hook_1: updraftplus_clean_temporary_files
+    Fix: No installed PHP names these hooks, so their events run nothing. If you recognise a hook from a plugin you removed, delete its events with `wp cron event delete <hook>`. ...
+  ...
+
+14 findings (0 critical, 5 warning, 9 info). Checks: 24 passed, 13 with findings, 6 skipped, 0 failed to run.
+```
+
+A scan of a demo site with planted problems: a theme running encoded code,
+PHP in uploads, a stray plugin folder, a database dump in the web root and the
+sample keys and salts from `wp-config-sample.php`.
+
+![A wp-doctor scan of the demo site, in a terminal](docs/demo.svg)
 
 ## Why
 
