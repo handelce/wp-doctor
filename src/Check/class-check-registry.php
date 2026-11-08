@@ -36,6 +36,7 @@ use WP_Doctor\Check\Category\Security\Core_Checksums_Check;
 use WP_Doctor\Check\Category\Security\Inactive_Plugins_Check;
 use WP_Doctor\Check\Category\Security\Obfuscated_Code_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
+use WP_Doctor\Check\Category\Security\Recent_Changes_Check;
 use WP_Doctor\Check\Category\Security\Remote_Code_Check;
 use WP_Doctor\Check\Category\Security\Unknown_Plugins_Check;
 use WP_Doctor\Check\Category\Security\Unknown_Themes_Check;
@@ -110,6 +111,7 @@ final class Check_Registry {
 			new Outdated_Updates_Check(),
 			new Php_Settings_Check(),
 			new Php_Version_Check(),
+			new Recent_Changes_Check(),
 			new Remote_Code_Check(),
 			new Tables_Bloat_Check(),
 			new Tables_Largest_Check(),

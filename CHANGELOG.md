@@ -23,6 +23,12 @@ minor release may change the command-line options or the JSON report shape.
   or themes directory that WordPress would not load as a plugin or theme, such
   as a folder with no plugin header or no `style.css`, or a stray PHP file at
   the top. Such code can still be requested over the web.
+- `sec.recent.changes` (info): PHP files written in the last 7 days apart
+  from the rest of their plugin, theme or WordPress core, judged by the time
+  the file was last written on disk, which `touch` cannot set back. Set the
+  number of days with an `info` threshold in `wp-doctor.json`:
+  `{"thresholds": {"sec.recent.changes": {"info": 14}}}`. Skipped on Windows
+  and on a site whose files were all written within the same hour.
 
 ### Changed
 

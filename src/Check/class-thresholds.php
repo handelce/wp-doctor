@@ -13,7 +13,7 @@ namespace WP_Doctor\Check;
 use function WP_Doctor\esc_cli;
 
 /**
- * The warning and critical limits for the checks that have them, either the
+ * The info, warning and critical limits for the checks that have them, either the
  * built-in defaults or values from wp-doctor.json. A check asks for its own
  * id with its default, so a missing setting always falls back to the default.
  *
@@ -21,6 +21,7 @@ use function WP_Doctor\esc_cli;
  */
 final class Thresholds {
 
+	public const INFO     = 'info';
 	public const WARNING  = 'warning';
 	public const CRITICAL = 'critical';
 
@@ -49,6 +50,7 @@ final class Thresholds {
 		),
 		'disk.errorlog.size'      => array( self::WARNING => array( 'bytes', 52428800 ) ),
 		'sec.users.admins'        => array( self::CRITICAL => array( 'administrators registered within 24 hours', 3 ) ),
+		'sec.recent.changes'      => array( self::INFO => array( 'days a changed PHP file counts as recent', 7 ) ),
 	);
 
 	/**
@@ -185,6 +187,19 @@ final class Thresholds {
 	}
 
 	/**
+	 * The info limit for a check: the configured one, else the built-in one.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $check_id Check id.
+	 * @return int
+	 * @throws \LogicException When the check has no info level.
+	 */
+	public function info( string $check_id ): int {
+		return $this->limit( $check_id, self::INFO );
+	}
+
+	/**
 	 * The warning limit for a check: the configured one, else the built-in one.
 	 *
 	 * @since 0.1.0
@@ -238,7 +253,7 @@ final class Thresholds {
 	 * @since 0.1.0
 	 *
 	 * @param string $check_id Check id.
-	 * @param string $level    WARNING or CRITICAL.
+	 * @param string $level    INFO, WARNING or CRITICAL.
 	 * @return int
 	 * @throws \LogicException When the check has no such level.
 	 */

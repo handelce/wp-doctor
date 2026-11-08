@@ -336,7 +336,7 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_the_scanner_exposes_no_method_that_writes(): void {
-		$allowed = array( '__construct', 'walk', 'stat', 'presence', 'read', 'hash', 'notices', 'root', 'has_unix_permissions' );
+		$allowed = array( '__construct', 'walk', 'stat', 'presence', 'read', 'hash', 'notices', 'root', 'has_unix_permissions', 'has_change_times' );
 		$methods = array();
 		foreach ( ( new \ReflectionClass( File_Scanner::class ) )->getMethods( \ReflectionMethod::IS_PUBLIC ) as $method ) {
 			$methods[] = $method->getName();
@@ -347,13 +347,31 @@ final class File_Scanner_Test extends TestCase {
 	}
 
 	public function test_file_info_is_a_value_object(): void {
-		$info = new File_Info( 'a/b.txt', 3, 100, 0644, File_Info::FILE );
+		$info = new File_Info( 'a/b.txt', 3, 100, 200, 0644, File_Info::FILE );
 
 		$this->assertTrue( $info->is_file() );
 		$this->assertFalse( $info->is_dir() );
 		$this->assertFalse( $info->is_link() );
 		$this->assertSame( 'txt', $info->extension() );
 		$this->assertSame( 'b.txt', $info->name() );
+		$this->assertSame( 100, $info->mtime() );
+		$this->assertSame( 200, $info->ctime() );
+	}
+
+	public function test_a_walk_reports_the_change_time_of_a_file_even_when_its_modification_time_was_set(): void {
+		$path = $this->tree->file( 'a.php' );
+		touch( $path, 946684800 );
+		clearstatcache();
+		$scanner = new File_Scanner( $this->tree->site() );
+
+		$entries = iterator_to_array( $scanner->walk()->getIterator(), false );
+
+		$this->assertCount( 1, $entries );
+		$this->assertSame( 946684800, $entries[0]->mtime() );
+		$this->assertSame( filectime( $path ), $entries[0]->ctime() );
+		if ( $scanner->has_change_times() ) {
+			$this->assertGreaterThan( 946684800, $entries[0]->ctime() );
+		}
 	}
 
 	/**

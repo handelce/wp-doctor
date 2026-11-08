@@ -35,7 +35,7 @@ src/
     class-mysqli-driver.php        the one class that calls mysqli
   Fs/
     class-file-scanner.php         bounded, read-only directory walker
-    class-file-info.php            one entry: path, size, mtime, mode, type
+    class-file-info.php            one entry: path, size, mtime, ctime, mode, type
   Check/
     interface-check.php            interface
     class-check-registry.php       the explicit, ordered list of checks
@@ -407,21 +407,22 @@ last silently. A leading UTF-8 byte order mark is ignored. All three keys apply:
   built-in critical is 3145728. `"thresholds": null`, a list in place of an
   object, and a check with no level set (`{}`) are refused too.
 
-| Check | `warning` | `critical` |
-|---|---|---|
-| `perf.autoload.size` | bytes of autoloaded options (1048576) | bytes (3145728) |
-| `perf.autoload.orphaned` | bytes an orphaned option must exceed (10240) | |
-| `perf.tables.bloat` | bytes a log or session table must exceed (104857600) | |
-| `perf.transients.expired` | expired transient rows (5000) | |
-| `perf.cron.duplicates` | | copies of one event (50) |
-| `perf.cron.overdue` | seconds an event is late (3600) | |
-| `disk.debuglog.size` | bytes (104857600) | bytes (1073741824) |
-| `disk.errorlog.size` | bytes (52428800) | |
-| `sec.users.admins` | | administrators registered within 24 hours (3) |
+| Check | `info` | `warning` | `critical` |
+|---|---|---|---|
+| `perf.autoload.size` | | bytes of autoloaded options (1048576) | bytes (3145728) |
+| `perf.autoload.orphaned` | | bytes an orphaned option must exceed (10240) | |
+| `perf.tables.bloat` | | bytes a log or session table must exceed (104857600) | |
+| `perf.transients.expired` | | expired transient rows (5000) | |
+| `perf.cron.duplicates` | | | copies of one event (50) |
+| `perf.cron.overdue` | | seconds an event is late (3600) | |
+| `disk.debuglog.size` | | bytes (104857600) | bytes (1073741824) |
+| `disk.errorlog.size` | | bytes (52428800) | |
+| `sec.users.admins` | | | administrators registered within 24 hours (3) |
+| `sec.recent.changes` | days a changed PHP file counts as recent (7) | | |
 
 `Thresholds` holds both the units and the built-in limits, and the checks read
-their limits from it, so this table has one source. Info-level rules such as
-the memory limit keep their defaults.
+their limits from it, so this table has one source. Other info-level rules, such as
+the memory limit, keep their defaults.
 
 ## Network use
 

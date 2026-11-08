@@ -40,6 +40,21 @@ final class Thresholds_Test extends TestCase {
 		$this->assertSame( array( 'perf.autoload.size', 'perf.cron.duplicates' ), $thresholds->configured_ids() );
 	}
 
+	public function test_an_info_level_is_read_with_its_default_and_from_the_file(): void {
+		$this->assertSame( 7, Thresholds::defaults()->info( 'sec.recent.changes' ) );
+
+		$thresholds = Thresholds::from_config( array( 'sec.recent.changes' => array( 'info' => 30 ) ), 'custom.json' );
+
+		$this->assertSame( 30, $thresholds->info( 'sec.recent.changes' ) );
+		$this->assertSame( 'set in custom.json', $thresholds->basis( 'sec.recent.changes' ) );
+	}
+
+	public function test_an_info_level_is_refused_for_a_check_without_one(): void {
+		$this->expectException( \InvalidArgumentException::class );
+		$this->expectExceptionMessage( 'has no info threshold' );
+		Thresholds::from_config( array( 'perf.autoload.size' => array( 'info' => 1 ) ), 'custom.json' );
+	}
+
 	public function test_a_check_without_configurable_thresholds_is_refused_naming_the_configurable_ones(): void {
 		$this->expectException( \InvalidArgumentException::class );
 		$this->expectExceptionMessage( 'no configurable thresholds' );
@@ -61,7 +76,7 @@ final class Thresholds_Test extends TestCase {
 			$this->assertContains( $id, $registered, "$id is configurable but not registered" );
 			$this->assertNotEmpty( $levels );
 			foreach ( $levels as $level => $unit ) {
-				$this->assertContains( $level, array( Thresholds::WARNING, Thresholds::CRITICAL ) );
+				$this->assertContains( $level, array( Thresholds::INFO, Thresholds::WARNING, Thresholds::CRITICAL ) );
 				$this->assertNotSame( '', $unit );
 			}
 		}
@@ -100,7 +115,7 @@ final class Thresholds_Test extends TestCase {
 				$this->assertLessThan( Thresholds::defaults()->critical( $id ), Thresholds::defaults()->warning( $id ), $id );
 			}
 			foreach ( array_keys( $levels ) as $level ) {
-				$limit = Thresholds::WARNING === $level ? Thresholds::defaults()->warning( $id ) : Thresholds::defaults()->critical( $id );
+				$limit = Thresholds::defaults()->{$level}( $id );
 				$this->assertGreaterThan( 0, $limit, "$id $level" );
 			}
 		}

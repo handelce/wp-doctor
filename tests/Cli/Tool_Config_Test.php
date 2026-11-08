@@ -35,6 +35,12 @@ final class Tool_Config_Test extends TestCase {
 		$config->assert_check_ids( array( 'perf.autoload.size', 'config.xmlrpc.enabled' ) );
 	}
 
+	public function test_an_info_threshold_is_accepted(): void {
+		$config = Tool_Config::from_json( '{"thresholds":{"sec.recent.changes":{"info":14}}}', 'wp-doctor.json' );
+
+		$this->assertSame( array( 'sec.recent.changes' => array( 'info' => 14 ) ), $config->thresholds() );
+	}
+
 	public function test_a_leading_byte_order_mark_is_accepted(): void {
 		$config = Tool_Config::from_json( "\xef\xbb\xbf" . '{"exclude":["wp-content/cache/**"]}', 'wp-doctor.json' );
 
@@ -135,6 +141,7 @@ final class Tool_Config_Test extends TestCase {
 			'a list'                    => array( '["exclude"]', 'must be a JSON object' ),
 			'unknown key'               => array( '{"exlcude":["a"]}', 'Unknown key "exlcude"' ),
 			'unknown nested key'        => array( '{"thresholds":{"perf.autoload.size":{"warn":1}}}', 'Unknown key "warn"' ),
+			'unknown level named'       => array( '{"thresholds":{"perf.autoload.size":{"notice":1}}}', 'expected: info, warning, critical' ),
 			'exclude is a string'       => array( '{"exclude":"a/**"}', '"exclude" must be a list' ),
 			'exclude holds a number'    => array( '{"exclude":[5]}', '"exclude"' ),
 			'exclude holds an empty'    => array( '{"exclude":[""]}', '"exclude"' ),

@@ -224,9 +224,22 @@ final class Code_Directory {
 	 * @return bool
 	 */
 	public function is_index_stub( File_Info $entry ): bool {
+		return self::is_stub_in( $this->files, $entry );
+	}
+
+	/**
+	 * Whether a file read through $files is the empty index.php stub.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param File_Scanner $files Scanner the entry came from.
+	 * @param File_Info    $entry File from a walk.
+	 * @return bool
+	 */
+	public static function is_stub_in( File_Scanner $files, File_Info $entry ): bool {
 		return 'index.php' === $entry->name()
 			&& $entry->size() <= self::STUB_MAX_BYTES
-			&& 1 === preg_match( self::INDEX_STUB, (string) $this->files->read( $entry->path(), self::STUB_MAX_BYTES ) );
+			&& 1 === preg_match( self::INDEX_STUB, (string) $files->read( $entry->path(), self::STUB_MAX_BYTES ) );
 	}
 
 	/**

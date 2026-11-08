@@ -49,6 +49,16 @@ final class File_Info {
 	private $mtime;
 
 	/**
+	 * Inode change time as a Unix timestamp: when the file was last written or
+	 * had its metadata changed. Creation time on Windows.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @var int
+	 */
+	private $ctime;
+
+	/**
 	 * Permission bits, for example 0644.
 	 *
 	 * @since 0.1.0
@@ -74,11 +84,12 @@ final class File_Info {
 	 * @param string $path  Path relative to the scanner root.
 	 * @param int    $size  Size in bytes.
 	 * @param int    $mtime Modification time as a Unix timestamp.
+	 * @param int    $ctime Inode change time as a Unix timestamp, or creation time on Windows.
 	 * @param int    $mode  Permission bits without the file type, for example 0644.
 	 * @param string $type  FILE, DIRECTORY or LINK.
 	 * @throws \InvalidArgumentException When the type is unknown.
 	 */
-	public function __construct( string $path, int $size, int $mtime, int $mode, string $type ) {
+	public function __construct( string $path, int $size, int $mtime, int $ctime, int $mode, string $type ) {
 		if ( ! in_array( $type, array( self::FILE, self::DIRECTORY, self::LINK ), true ) ) {
 			throw new \InvalidArgumentException( 'Unknown entry type' );
 		}
@@ -86,6 +97,7 @@ final class File_Info {
 		$this->path  = $path;
 		$this->size  = $size;
 		$this->mtime = $mtime;
+		$this->ctime = $ctime;
 		$this->mode  = $mode;
 		$this->type  = $type;
 	}
@@ -143,6 +155,17 @@ final class File_Info {
 	 */
 	public function mtime(): int {
 		return $this->mtime;
+	}
+
+	/**
+	 * Inode change time as a Unix timestamp. Creation time on Windows.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @return int
+	 */
+	public function ctime(): int {
+		return $this->ctime;
 	}
 
 	/**

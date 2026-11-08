@@ -188,13 +188,13 @@ final class File_Scanner {
 	private $truncated_reads = 0;
 
 	/**
-	 * Whether the platform reports real Unix permission bits.
+	 * Whether the platform reports real Unix permission bits and inode change times.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @var bool
 	 */
-	private $unix_permissions;
+	private $unix;
 
 	/**
 	 * Resolves the root and compiles the exclude globs.
@@ -215,11 +215,11 @@ final class File_Scanner {
 			throw new \InvalidArgumentException( esc_cli( "Scanner root is not a directory: $root" ) );
 		}
 
-		$this->root             = rtrim( $real, '/' );
-		$this->max_files        = $max_files;
-		$this->cache_entries    = $cache_entries;
-		$this->max_bytes        = $max_bytes;
-		$this->unix_permissions = 'Windows' !== $os_family;
+		$this->root          = rtrim( $real, '/' );
+		$this->max_files     = $max_files;
+		$this->cache_entries = $cache_entries;
+		$this->max_bytes     = $max_bytes;
+		$this->unix          = 'Windows' !== $os_family;
 		foreach ( $exclude as $glob ) {
 			$this->excluded[] = $this->glob_to_regex( $glob );
 		}
@@ -234,7 +234,19 @@ final class File_Scanner {
 	 * @return bool
 	 */
 	public function has_unix_permissions(): bool {
-		return $this->unix_permissions;
+		return $this->unix;
+	}
+
+	/**
+	 * Whether File_Info::ctime() is the time a file was last written or had
+	 * its metadata changed. PHP on Windows reports the creation time there.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @return bool
+	 */
+	public function has_change_times(): bool {
+		return $this->unix;
 	}
 
 	/**
@@ -750,7 +762,7 @@ final class File_Scanner {
 			$type = File_Info::FILE;
 		}
 
-		return new File_Info( $relative, $stat['size'], $stat['mtime'], $stat['mode'] & 07777, $type );
+		return new File_Info( $relative, $stat['size'], $stat['mtime'], $stat['ctime'], $stat['mode'] & 07777, $type );
 	}
 
 	/**

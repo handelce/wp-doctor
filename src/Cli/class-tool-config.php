@@ -53,7 +53,7 @@ final class Tool_Config {
 	private $ignore;
 
 	/**
-	 * Warning and critical limits by check id.
+	 * Info, warning and critical limits by check id.
 	 *
 	 * @since 0.1.0
 	 *
@@ -69,7 +69,7 @@ final class Tool_Config {
 	 * @param string|null                       $source     Origin of the settings, or null when there is no file.
 	 * @param string[]                          $excludes   Exclude globs.
 	 * @param string[]                          $ignore     Check ids to silence.
-	 * @param array<string, array<string, int>> $thresholds Warning and critical limits by check id.
+	 * @param array<string, array<string, int>> $thresholds Info, warning and critical limits by check id.
 	 */
 	private function __construct( ?string $source, array $excludes, array $ignore, array $thresholds ) {
 		$this->source     = $source;
@@ -208,7 +208,7 @@ final class Tool_Config {
 	}
 
 	/**
-	 * Warning and critical limits by check id.
+	 * Info, warning and critical limits by check id.
 	 *
 	 * @since 0.1.0
 	 *
@@ -324,7 +324,7 @@ final class Tool_Config {
 				throw new Config_File_Exception( esc_cli( "The thresholds for \"$id\" must be an object in $label" ) );
 			}
 			if ( array() === get_object_vars( $levels ) ) {
-				throw new Config_File_Exception( esc_cli( "The thresholds for \"$id\" set no level in $label; give warning, critical or both" ) );
+				throw new Config_File_Exception( esc_cli( "The thresholds for \"$id\" set no level in $label; give info, warning or critical" ) );
 			}
 		}
 	}
@@ -354,8 +354,8 @@ final class Tool_Config {
 				throw new Config_File_Exception( esc_cli( "The thresholds for \"$id\" must be an object in $label" ) );
 			}
 			foreach ( $levels as $level => $limit ) {
-				if ( ! in_array( $level, array( 'warning', 'critical' ), true ) ) {
-					throw new Config_File_Exception( esc_cli( "Unknown key \"$level\" in the thresholds for \"$id\"; expected: warning, critical" ) );
+				if ( ! in_array( $level, array( 'info', 'warning', 'critical' ), true ) ) {
+					throw new Config_File_Exception( esc_cli( "Unknown key \"$level\" in the thresholds for \"$id\"; expected: info, warning, critical" ) );
 				}
 				if ( ! is_int( $limit ) || $limit < 1 ) {
 					throw new Config_File_Exception( esc_cli( "The $level threshold for \"$id\" must be a positive integer" ) );
