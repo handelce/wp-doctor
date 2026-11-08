@@ -102,7 +102,7 @@ runs:
         WPD_FAIL_ON: ${{ inputs.fail-on }}
         WPD_OUT: ${{ runner.temp }}/wp-doctor-report
       run: |
-        set -uo pipefail
+        set +e -uo pipefail
         case "$WPD_FAIL_ON" in
           critical|warning|never) ;;
           *) echo "::error::fail-on must be critical, warning or never, not $WPD_FAIL_ON"; exit 1 ;;
