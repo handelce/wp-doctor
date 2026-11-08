@@ -23,8 +23,8 @@ final class Checks_Catalogue_Test extends TestCase {
 		$text = (string) file_get_contents( dirname( __DIR__ ) . '/docs/CHECKS.md' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$rows = array();
 		foreach ( explode( "\n", $text ) as $line ) {
-			if ( 1 === preg_match( '/^\| `([a-z]+(?:\.[a-z]+){2})` \|.*\| ([0-9.]+(?: \(planned\))?|later) \|\s*$/', $line, $match ) ) {
-				$rows[ $match[1] ] = $match[2];
+			if ( 1 === preg_match( '/^\| (?:\[`([a-z]+(?:\.[a-z]+){2})`\]\(checks\/\1\.md\)|`([a-z]+(?:\.[a-z]+){2})`) \|.*\| ([0-9.]+(?: \(planned\))?|later) \|\s*$/', $line, $match ) ) {
+				$rows[ '' !== $match[1] ? $match[1] : $match[2] ] = $match[3];
 			}
 		}
 

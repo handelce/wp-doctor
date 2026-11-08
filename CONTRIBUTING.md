@@ -53,8 +53,12 @@ check".
    row in `docs/CHECKS.md`.
 2. Create `src/Check/Category/<Area>/class-<name>-check.php` implementing `Check`.
 3. Return `Result::pass()`, `Result::findings(...)`, or `Result::skipped($reason)`.
-4. Every `Finding` needs evidence and a fix the user can act on.
-5. Add the row to `docs/CHECKS.md`.
+4. Every `Finding` needs evidence and a fix the user can act on. Evidence keys
+   are fixed names; several items go in a list, such as
+   `"files": [{"path": "...", "bytes": 1}]` (see `docs/REPORT.md`).
+5. Add the row to `docs/CHECKS.md`, linked to a page `docs/checks/<id>.md` that
+   follows the others: what it reports, why it matters, every evidence key,
+   an example finding, when it skips, and false positives.
 6. Add tests: a fixture that triggers the finding, a fixture that passes, and an
    assertion that the fixture held something to examine.
 7. Register the check in `Check_Registry`.

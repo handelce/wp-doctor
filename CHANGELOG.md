@@ -7,6 +7,12 @@ minor release may change the command-line options or the JSON report shape.
 
 ## [Unreleased]
 
+### Added
+
+- A page for each check in `docs/checks/`: what it reports and why, every
+  evidence key with its type and meaning, an example finding, when it skips,
+  and its known false positives. `docs/CHECKS.md` is now an index of them.
+
 ### Changed
 
 - The JSON report is version 1 (`"schema_version": 1`) and is described by
@@ -18,6 +24,16 @@ minor release may change the command-line options or the JSON report shape.
   `"plugins": ["akismet", "hello.php"]`. Text and Markdown reports show each
   item on its own line. This changes the JSON for every check that lists
   items, so update any parser that read the numbered keys.
+
+### Fixed
+
+- `disk.leftovers.web` did not report a compressed database dump, such as
+  `site.sql.gz`, inside a plugin, theme, `vendor` or `node_modules` folder.
+  It is now reported as an archive there, a warning.
+- `sec.core.checksums` gave the size of the whole release checksum list as
+  `files_compared`, including files it never compares. It now counts the
+  files it read and hashed. Release files that could not be read or were not
+  compared now set `scan_incomplete`.
 
 ## [0.3.0] - 2026-11-08
 
