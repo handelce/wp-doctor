@@ -4,41 +4,48 @@ Read-only health and compromise scanner for WordPress. Point it at a site
 directory and get a ranked report of what is slow, bloated, misconfigured, or
 compromised, with a fix for every finding.
 
-> Status: early releases (0.x); options and the JSON shape may still change.
-> Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+> Status: 1.x. The command-line options and the JSON report follow Semantic
+> Versioning, so nothing that breaks them changes before 2.0. Changes are
+> recorded in [CHANGELOG.md](CHANGELOG.md).
 
 An excerpt of a real scan of a WordPress 7.1.4 test site with WooCommerce,
 Yoast SEO, Contact Form 7 and a few other plugins, run with its database:
 
 ```
 $ php wp-doctor.phar scan /var/www/example.test --offline
-wp-doctor 0.3.0, WordPress 7.1.4
+wp-doctor 1.0.0, WordPress 7.1.4
 
 WARNING (5)
   [perf.cron.overdue] Scheduled events are overdue
     overdue_events: 14
     scheduled_events: 14
-    oldest_overdue_seconds: 314707
-    hook_1: action_scheduler_run_queue
-    ...
+    oldest_overdue_seconds: 334602
+    hooks:
+      - hook: action_scheduler_run_queue
+        overdue: 1
+      ...
     Fix: WordPress only runs scheduled events when someone visits the site. Add a system cron job that requests wp-cron.php every few minutes (or runs `wp cron event run --due-now`), ...
   [sec.updates.outdated] Updates are available and not yet installed
     plugin_updates: 2
     theme_updates: 3
-    plugin_1: akismet/akismet.php -> 5.7.2
-    plugin_2: contact-form-7/wp-contact-form-7.php -> 6.2.4.1
+    plugins:
+      - akismet/akismet.php -> 5.7.2
+      - contact-form-7/wp-contact-form-7.php -> 6.2.4.1
     ...
   [sec.users.admins] Administrator accounts with an email address that is likely not a real person's
-    admin_1: siteowner
-    admin_1_email: owner@example.test
-    admin_1_reason: placeholder email domain
+    admins:
+      - login: siteowner
+        email: owner@example.test
+        reason: placeholder email domain
     ...
 
 INFO (9)
   [sec.wpcron.persistence] Scheduled events are likely left by plugins that were removed
     hooks_scheduled: 14
     hooks_not_named: 1
-    hook_1: updraftplus_clean_temporary_files
+    hooks:
+      - hook: updraftplus_clean_temporary_files
+        events: 1
     Fix: No installed PHP names these hooks, so their events run nothing. If you recognise a hook from a plugin you removed, delete its events with `wp cron event delete <hook>`. ...
   ...
 
@@ -66,7 +73,9 @@ sample keys and salts from `wp-config-sample.php`.
 ## What it checks
 
 Performance and database, disk and logs, compromise indicators, and
-configuration hardening. See [docs/CHECKS.md](docs/CHECKS.md) for the full list.
+configuration hardening. See [docs/CHECKS.md](docs/CHECKS.md) for the full
+list, with a page for each check that explains what it reports and every
+field of its evidence.
 
 ## Install
 
@@ -147,13 +156,16 @@ since Windows has no Unix file modes.
 
 ## Output formats
 
-`--format=json` carries a `schema_version` of 0: the JSON shape may change in
-any release before v1.0, so check the field before relying on it.
+`--format=json` prints a document with `"schema_version": 1`, described in
+[docs/REPORT.md](docs/REPORT.md) and by the JSON Schema
+[docs/report.schema.json](docs/report.schema.json). Fields are not removed or
+renamed while the version is 1; new ones may appear.
 
 ## Docs
 
+- [Check catalogue](docs/CHECKS.md), with a page for each check in [docs/checks/](docs/checks/)
+- [JSON report](docs/REPORT.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Check catalogue](docs/CHECKS.md)
 - [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
 
