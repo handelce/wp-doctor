@@ -5,6 +5,20 @@ Notable changes to wp-doctor, by release. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0.0, any
 minor release may change the command-line options or the JSON report shape.
 
+## [Unreleased]
+
+### Changed
+
+- The JSON report is version 1 (`"schema_version": 1`) and is described by
+  `docs/report.schema.json` and `docs/REPORT.md`. Its shape will not change
+  in a way that breaks a parser before version 2.
+- Evidence that listed several items under numbered keys (`file_1`,
+  `file_1_bytes`, `file_2`, ...) now gives a list instead, such as
+  `"files": [{"path": "...", "bytes": 120}]`, or a list of names, such as
+  `"plugins": ["akismet", "hello.php"]`. Text and Markdown reports show each
+  item on its own line. This changes the JSON for every check that lists
+  items, so update any parser that read the numbered keys.
+
 ## [0.3.0] - 2026-11-08
 
 ### Added
@@ -140,6 +154,7 @@ First release.
 - For the database checks: MySQL 5.6.5 or MariaDB 10.0 or later.
 - Linux or macOS. Windows is not supported yet.
 
+[Unreleased]: https://github.com/handelce/wp-doctor/compare/v0.3.0...HEAD
 [0.3.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/handelce/wp-doctor/releases/tag/v0.2.0
 [0.1.1]: https://github.com/handelce/wp-doctor/releases/tag/v0.1.1

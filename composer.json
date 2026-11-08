@@ -30,6 +30,7 @@
 	},
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"justinrainbow/json-schema": "^5.3",
 		"phpcompatibility/php-compatibility": "^9.3",
 		"phpstan/phpstan": "^1.11",
 		"phpunit/phpunit": "^8.5 || ^9.6",

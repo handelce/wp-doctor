@@ -41,7 +41,7 @@ final class Json_Formatter_Test extends TestCase {
 		$data = $this->decode( Sample_Report::mixed() );
 
 		$this->assertSame( array( 'schema_version', 'tool', 'site', 'summary', 'findings', 'checks', 'notices' ), array_keys( $data ) );
-		$this->assertSame( 0, $data['schema_version'] );
+		$this->assertSame( 1, $data['schema_version'] );
 		$this->assertSame(
 			array(
 				'name'    => 'wp-doctor',

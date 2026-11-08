@@ -1,0 +1,328 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://github.com/handelce/wp-doctor/blob/main/docs/report.schema.json",
+	"title": "wp-doctor report",
+	"description": "The document printed by wp-doctor scan --format=json, schema version 1.",
+	"type": "object",
+	"required": [
+		"schema_version",
+		"tool",
+		"site",
+		"summary",
+		"findings",
+		"checks",
+		"notices"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"schema_version": {
+			"description": "1 for every 1.x release. A change that removes or renames a field raises it.",
+			"enum": [
+				1
+			]
+		},
+		"tool": {
+			"type": "object",
+			"required": [
+				"name",
+				"version"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"enum": [
+						"wp-doctor"
+					]
+				},
+				"version": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"site": {
+			"type": "object",
+			"required": [
+				"wp_version"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"wp_version": {
+					"description": "WordPress version read from wp-includes/version.php. Null when it could not be read.",
+					"type": [
+						"string",
+						"null"
+					]
+				}
+			}
+		},
+		"summary": {
+			"type": "object",
+			"required": [
+				"findings",
+				"checks",
+				"exit_code"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"findings": {
+					"description": "Findings by severity, leaving out those of checks silenced with ignore.",
+					"type": "object",
+					"required": [
+						"critical",
+						"warning",
+						"info"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"critical": {
+							"$ref": "#/definitions/count"
+						},
+						"warning": {
+							"$ref": "#/definitions/count"
+						},
+						"info": {
+							"$ref": "#/definitions/count"
+						}
+					}
+				},
+				"checks": {
+					"description": "Checks by result, and how many were silenced with ignore. Silenced checks are not counted under their result.",
+					"type": "object",
+					"required": [
+						"pass",
+						"findings",
+						"skipped",
+						"error",
+						"ignored"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"pass": {
+							"$ref": "#/definitions/count"
+						},
+						"findings": {
+							"$ref": "#/definitions/count"
+						},
+						"skipped": {
+							"$ref": "#/definitions/count"
+						},
+						"error": {
+							"$ref": "#/definitions/count"
+						},
+						"ignored": {
+							"$ref": "#/definitions/count"
+						}
+					}
+				},
+				"exit_code": {
+					"description": "0 nothing above info, 1 warnings, 2 critical findings, 3 tool error.",
+					"enum": [
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			}
+		},
+		"findings": {
+			"description": "Findings of the checks that are not silenced, most severe first.",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/finding"
+			}
+		},
+		"checks": {
+			"description": "Every check that ran, in run order.",
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/check"
+			}
+		},
+		"notices": {
+			"description": "Notes about the scan as a whole, such as walks that stopped at --max-files.",
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"definitions": {
+		"count": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"scalar": {
+			"type": [
+				"string",
+				"integer",
+				"number",
+				"boolean"
+			]
+		},
+		"evidence_object": {
+			"description": "One item of a list: named fields, each a scalar.",
+			"type": "object",
+			"minProperties": 1,
+			"additionalProperties": {
+				"$ref": "#/definitions/scalar"
+			}
+		},
+		"evidence_value": {
+			"description": "A scalar, a list of scalars, or a list of objects. A list holds only scalars or only objects, and may be empty.",
+			"anyOf": [
+				{
+					"$ref": "#/definitions/scalar"
+				},
+				{
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/scalar"
+					}
+				},
+				{
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/evidence_object"
+					}
+				}
+			]
+		},
+		"finding": {
+			"type": "object",
+			"required": [
+				"id",
+				"severity",
+				"title",
+				"evidence",
+				"fix"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/check_id"
+				},
+				"severity": {
+					"enum": [
+						"critical",
+						"warning",
+						"info"
+					]
+				},
+				"title": {
+					"type": "string",
+					"minLength": 1
+				},
+				"evidence": {
+					"description": "What the check found, in the order it gives it. Keys are fixed names chosen by the check; names and paths from the site are only ever values.",
+					"type": "object",
+					"minProperties": 1,
+					"additionalProperties": {
+						"$ref": "#/definitions/evidence_value"
+					}
+				},
+				"fix": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"check": {
+			"type": "object",
+			"required": [
+				"id",
+				"category",
+				"status"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/check_id"
+				},
+				"category": {
+					"enum": [
+						"performance",
+						"disk",
+						"security",
+						"config"
+					]
+				},
+				"status": {
+					"enum": [
+						"pass",
+						"findings",
+						"skipped",
+						"error"
+					]
+				},
+				"reason": {
+					"description": "Why a skipped check did not run.",
+					"type": "string"
+				},
+				"message": {
+					"description": "What went wrong in a check that ended in error.",
+					"type": "string"
+				},
+				"ignored": {
+					"description": "True for a check silenced with ignore.",
+					"enum": [
+						true
+					]
+				},
+				"findings": {
+					"description": "Findings of a silenced check, which are not in the top-level findings.",
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/finding"
+					}
+				}
+			},
+			"dependencies": {
+				"ignored": [
+					"findings"
+				]
+			},
+			"anyOf": [
+				{
+					"properties": {
+						"status": {
+							"enum": [
+								"pass",
+								"findings"
+							]
+						}
+					}
+				},
+				{
+					"properties": {
+						"status": {
+							"enum": [
+								"skipped"
+							]
+						}
+					},
+					"required": [
+						"reason"
+					]
+				},
+				{
+					"properties": {
+						"status": {
+							"enum": [
+								"error"
+							]
+						}
+					},
+					"required": [
+						"message"
+					]
+				}
+			]
+		},
+		"check_id": {
+			"type": "string",
+			"pattern": "^[a-z]+(\\.[a-z0-9]+)+$"
+		}
+	}
+}

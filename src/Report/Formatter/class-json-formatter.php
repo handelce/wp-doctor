@@ -19,7 +19,8 @@ use WP_Doctor\Util\Hidden_Characters;
 use function WP_Doctor\esc_cli;
 
 /**
- * Stable document for machines. schema_version is 0 until the schema is frozen.
+ * Stable document for machines, described by docs/report.schema.json. A change
+ * that removes or renames a field raises schema_version.
  * Bytes that are not valid UTF-8 are replaced, not dropped, so the document
  * always parses. Non-ASCII text stays readable, except the characters in
  * Hidden_Characters, which are written as \u escapes: a
@@ -30,7 +31,7 @@ use function WP_Doctor\esc_cli;
  */
 final class Json_Formatter implements Formatter {
 
-	public const SCHEMA_VERSION = 0;
+	public const SCHEMA_VERSION = 1;
 
 	/**
 	 * Encodes the report as one pretty-printed JSON document.

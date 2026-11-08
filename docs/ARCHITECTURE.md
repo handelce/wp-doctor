@@ -41,7 +41,7 @@ src/
     interface-check.php            interface
     class-check-registry.php       the explicit, ordered list of checks
     class-runner.php               runs every check; a thrown exception becomes an error result
-    class-evidence.php             numbered evidence lists shared by checks
+    class-evidence.php             evidence lists (files, names) shared by checks, capped at 20 items
     class-thresholds.php           warning and critical limits, built in or from wp-doctor.json
     class-option-value.php         one options row, size-limited, for checks
     Category/                      Performance, Disk, Security, Config
@@ -313,9 +313,10 @@ in part.
 
 - **text** (default): grouped by severity, colour when attached to a TTY, a
   summary line at the end.
-- **json**: a `schema_version` field (0 until frozen at v1.0); findings include id,
-  severity, title, evidence, fix, and check status counts. While the version is
-  0 the shape may change in any release, so parsers should check the field.
+- **json**: `schema_version` 1, described by `docs/report.schema.json` and
+  [docs/REPORT.md](REPORT.md); findings include id, severity, title, evidence,
+  fix, and check status counts. The tests validate real scans of every
+  fixture site against the schema.
   Non-ASCII text is written as is, except the characters in
   `Hidden_Characters` (C1 controls, the soft hyphen, zero-width and
   directional marks, line and paragraph separators, bidi controls, the word
