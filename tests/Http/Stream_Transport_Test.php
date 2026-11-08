@@ -169,4 +169,9 @@ final class Stream_Transport_Test extends TestCase {
 
 		$this->assertSame( 101, strlen( (string) $body ) );
 	}
+
+	public function test_a_404_is_reported_as_not_published(): void {
+		$this->expectException( \WP_Doctor\Http\Not_Published_Exception::class );
+		Stream_Transport::accepted_body( 404, 'Not found', 100 );
+	}
 }

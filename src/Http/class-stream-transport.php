@@ -182,9 +182,13 @@ final class Stream_Transport implements Http_Transport {
 	 * @param string|false $body      Body read, up to one byte more than the limit.
 	 * @param int          $max_bytes Largest body to accept.
 	 * @return string The body.
+	 * @throws Not_Published_Exception When the server answers 404.
 	 * @throws Checksum_Unavailable_Exception When the answer is not acceptable.
 	 */
 	public static function accepted_body( int $status, $body, int $max_bytes ): string {
+		if ( 404 === $status ) {
+			throw new Not_Published_Exception( 'The server answered with status 404: nothing is published there' );
+		}
 		if ( 200 !== $status ) {
 			throw new Checksum_Unavailable_Exception( esc_cli( "The server answered with status $status" ) );
 		}

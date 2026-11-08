@@ -7,6 +7,14 @@ minor release may change the command-line options or the JSON report shape.
 
 ## [Unreleased]
 
+### Added
+
+- `sec.plugins.checksums` (warning): plugin files that differ from, or were
+  added to, the release wordpress.org publishes, as `wp plugin verify-checksums`
+  reports them. Plugins wordpress.org does not host are listed as not checked.
+  This sends each plugin's folder name and version to downloads.wordpress.org;
+  `--offline` turns it off.
+
 ### Changed
 
 - The phar build is reproducible: building a release tag gives the same bytes

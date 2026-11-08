@@ -428,10 +428,20 @@ the memory limit, keep their defaults.
 
 ## Network use
 
-The only network call is to `api.wordpress.org` for core checksums (and, from
-v0.2, plugin checksums at `downloads.wordpress.org`). `--offline` disables it and
-the affected checks report `skipped`. The tool sends the WordPress version and
-locale only.
+The network is used only to fetch official checksums from wordpress.org:
+
+- core checksums from `api.wordpress.org/core/checksums/1.0/`, sending the
+  WordPress version and package locale;
+- the list of WordPress releases from `api.wordpress.org/core/stable-check/1.0/`,
+  sending nothing, to compare `hello.php` with the releases before the
+  installed one, since updates leave it in place;
+- plugin checksums from `downloads.wordpress.org/plugin-checksums/<slug>/<version>.json`,
+  sending each plugin folder's name and version, one request per plugin.
+
+A 404 from wordpress.org means it publishes nothing for that plugin or
+version, and the plugin is listed as not checked. `--offline` turns all of
+this off and the affected checks report `skipped`. One scan fetches each core
+release's checksums once.
 
 Both transports allow HTTPS only, verify the certificate, follow no redirects
 and cap the body. The request must finish within 15 seconds in total: cURL

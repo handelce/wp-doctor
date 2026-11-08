@@ -206,4 +206,122 @@ final class Checksum_Client_Test extends TestCase {
 		$this->expectExceptionMessage( 'connection refused' );
 		( new Checksum_Client( $transport ) )->core_checksums( '6.5.2', 'en_US' );
 	}
+	public function test_a_release_asked_for_twice_is_fetched_once(): void {
+		list( $client, $transport ) = $this->client_answering( '{"checksums":{"wp-login.php":"0123456789abcdef0123456789abcdef"}}' );
+
+		$client->core_checksums( '6.5.2', 'en_US' );
+		$client->core_checksums( '6.5.2', 'en_US' );
+
+		$this->assertCount( 1, $transport->urls );
+	}
+
+	public function test_plugin_checksums_are_returned_by_path_with_every_accepted_hash_in_lowercase(): void {
+		$md5                        = str_repeat( 'A', 32 );
+		$sha256                     = str_repeat( 'b', 64 );
+		list( $client, $transport ) = $this->client_answering(
+			(string) json_encode( // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+				array(
+					'plugin' => 'example-forms',
+					'files'  => array(
+						'example-forms.php' => array(
+							'md5'    => $md5,
+							'sha256' => $sha256,
+						),
+						'inc/a.php'         => array( 'md5' => array( $md5, str_repeat( 'c', 32 ) ) ),
+					),
+				)
+			)
+		);
+
+		$checksums = $client->plugin_checksums( 'example-forms', '2.1.0' );
+
+		$this->assertSame(
+			array(
+				'example-forms.php' => array(
+					'sha256' => array( $sha256 ),
+					'md5'    => array( strtolower( $md5 ) ),
+				),
+				'inc/a.php'         => array(
+					'sha256' => array(),
+					'md5'    => array( strtolower( $md5 ), str_repeat( 'c', 32 ) ),
+				),
+			),
+			$checksums
+		);
+		$this->assertSame( array( 'https://downloads.wordpress.org/plugin-checksums/example-forms/2.1.0.json' ), $transport->urls );
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public function refused_plugin_input(): array {
+		return array(
+			'upper case slug'     => array( 'Example-Forms', '1.0' ),
+			'slug with a slash'   => array( 'example/../x', '1.0' ),
+			'slug with a dot'     => array( 'example.forms', '1.0' ),
+			'version with spaces' => array( 'example-forms', '1.0 beta' ),
+			'version with a path' => array( 'example-forms', '../1.0' ),
+			'empty version'       => array( 'example-forms', '' ),
+		);
+	}
+
+	/**
+	 * @dataProvider refused_plugin_input
+	 * @param string $slug    Folder name.
+	 * @param string $version Version header.
+	 */
+	public function test_a_slug_or_version_that_cannot_be_put_in_a_url_is_refused_before_any_request( string $slug, string $version ): void {
+		list( $client, $transport ) = $this->client_answering( '{}' );
+		try {
+			$client->plugin_checksums( $slug, $version );
+			$this->fail( 'The input was accepted' );
+		} catch ( Checksum_Unavailable_Exception $e ) {
+			$this->assertSame( array(), $transport->urls );
+		}
+	}
+
+	/**
+	 * @return array<string, array{0: string}>
+	 */
+	public function unusable_plugin_responses(): array {
+		return array(
+			'not json'          => array( 'Not found' ),
+			'no files'          => array( '{"plugin":"x"}' ),
+			'empty files'       => array( '{"files":{}}' ),
+			'path leaving'      => array( '{"files":{"../x.php":{"md5":"' . str_repeat( 'a', 32 ) . '"}}}' ),
+			'no hash'           => array( '{"files":{"x.php":{}}}' ),
+			'short sha256'      => array( '{"files":{"x.php":{"sha256":"abc"}}}' ),
+			'hash not a string' => array( '{"files":{"x.php":{"md5":[5]}}}' ),
+		);
+	}
+
+	/**
+	 * @dataProvider unusable_plugin_responses
+	 * @param string $body Response body.
+	 */
+	public function test_a_plugin_response_that_is_not_a_usable_list_is_refused( string $body ): void {
+		list( $client ) = $this->client_answering( $body );
+
+		$this->expectException( Checksum_Unavailable_Exception::class );
+		$client->plugin_checksums( 'example-forms', '1.0' );
+	}
+
+	public function test_the_plugin_providers_are_not_empty(): void {
+		$this->assertGreaterThan( 4, count( $this->refused_plugin_input() ) );
+		$this->assertGreaterThan( 4, count( $this->unusable_plugin_responses() ) );
+	}
+
+	public function test_core_releases_are_returned_oldest_first(): void {
+		list( $client, $transport ) = $this->client_answering( '{"6.10":"outdated","7.1.4":"latest","6.9.11":"outdated","1.5.1.1":"insecure","1.0.2":"insecure"}' );
+
+		$this->assertSame( array( '1.0.2', '1.5.1.1', '6.9.11', '6.10', '7.1.4' ), $client->core_releases() );
+		$this->assertSame( array( 'https://api.wordpress.org/core/stable-check/1.0/' ), $transport->urls );
+	}
+
+	public function test_a_release_list_holding_something_else_is_refused(): void {
+		list( $client ) = $this->client_answering( '{"7.1.4":"latest","trunk":"latest"}' );
+
+		$this->expectException( Checksum_Unavailable_Exception::class );
+		$client->core_releases();
+	}
 }

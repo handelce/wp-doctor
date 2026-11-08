@@ -82,7 +82,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 			return Result::skipped( 'The WordPress version could not be read from ' . $site->core_path( 'wp-includes/version.php' ) );
 		}
 
-		$locale = $this->package_locale( $context );
+		$locale = self::package_locale( $context );
 
 		try {
 			$expected = $context->checksums()->core_checksums( $version, $locale );
@@ -244,7 +244,7 @@ final class Core_Checksums_Check implements Runs_Without_Config {
 	 * @param Context $context Gives wp-includes/version.php.
 	 * @return string
 	 */
-	private function package_locale( Context $context ): string {
+	public static function package_locale( Context $context ): string {
 		$source = $context->files()->read( $context->site()->core_path( 'wp-includes/version.php' ), self::MAX_VERSION_BYTES );
 		if ( null !== $source && 1 === preg_match( '/^\s*\$wp_local_package\s*=\s*\'([^\']*)\'\s*;/m', $source, $match ) && '' !== $match[1] ) {
 			return $match[1];

@@ -167,6 +167,27 @@ final class Code_Directory {
 	}
 
 	/**
+	 * Regular files under the folder $relative, at any depth, keyed by their path inside it.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @param string $relative Folder inside the directory.
+	 * @return array<string, File_Info>
+	 */
+	public function files_under( string $relative ): array {
+		$prefix = $relative . '/';
+		$found  = array();
+		foreach ( $this->entries as $inside => $entry ) {
+			if ( $entry->is_file() && 0 === strpos( $inside, $prefix ) ) {
+				$found[ substr( $inside, strlen( $prefix ) ) ] = $entry;
+			}
+		}
+		ksort( $found, SORT_STRING );
+
+		return $found;
+	}
+
+	/**
 	 * PHP files under the folder $relative, at any depth, leaving out the
 	 * folders in $except.
 	 *

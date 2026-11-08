@@ -15,5 +15,5 @@ namespace WP_Doctor\Http;
  *
  * @since 0.1.0
  */
-final class Checksum_Unavailable_Exception extends \RuntimeException {
+class Checksum_Unavailable_Exception extends \RuntimeException {
 }
