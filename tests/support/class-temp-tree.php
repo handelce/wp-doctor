@@ -12,6 +12,7 @@ namespace WP_Doctor\Tests\Support;
 use PHPUnit\Framework\SkippedTestError;
 
 use function WP_Doctor\esc_cli;
+use function WP_Doctor\real_path;
 
 final class Temp_Tree {
 
@@ -26,7 +27,7 @@ final class Temp_Tree {
 	 * Creates an empty root under the system temp directory.
 	 */
 	public function __construct() {
-		$base       = (string) realpath( sys_get_temp_dir() );
+		$base       = (string) real_path( sys_get_temp_dir() );
 		$this->root = $base . '/wpd-' . bin2hex( random_bytes( 6 ) );
 		mkdir( $this->root . '/site', 0777, true );
 	}
@@ -169,8 +170,11 @@ final class Temp_Tree {
 	 * @param string $path Absolute path.
 	 */
 	private function delete( string $path ): void {
-		if ( is_link( $path ) && is_dir( $path ) && 'Windows' === PHP_OS_FAMILY ) {
-			rmdir( $path );
+		if ( is_link( $path ) && 'Windows' === PHP_OS_FAMILY ) {
+			// A link to a directory is removed with rmdir, also once its target is gone.
+			if ( ! @unlink( $path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- rmdir below reports the failure.
+				rmdir( $path );
+			}
 			return;
 		}
 		if ( is_link( $path ) || is_file( $path ) ) {

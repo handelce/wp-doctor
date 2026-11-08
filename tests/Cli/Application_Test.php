@@ -708,13 +708,14 @@ final class Application_Test extends TestCase {
 		);
 
 		list( $code, $out ) = $this->run_app( array( 'scan', $this->fixture( 'plain' ), "--config=$path", '--format=json' ), $registry );
-		$evidence           = json_decode( $out, true )['findings'][0]['evidence'];
+		$report             = json_decode( $out, true );
+		$evidence           = $report['findings'][0]['evidence'];
 
 		$this->assertSame( 0, $code );
 		$this->assertSame( 7, $evidence['warning'] );
 		$this->assertSame( 9, $evidence['critical'] );
 		$this->assertSame( 'set in ' . $path, $evidence['basis'] );
-		$this->assertStringContainsString( 'Thresholds from ' . $path . ' apply to: perf.autoload.size.', $out );
+		$this->assertContains( 'Thresholds from ' . $path . ' apply to: perf.autoload.size.', $report['notices'] );
 	}
 
 	public function test_a_config_naming_an_unknown_check_or_an_unsupported_level_exits_three(): void {
