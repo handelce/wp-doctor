@@ -167,6 +167,16 @@ final class Leftover_Files_Check_Test extends TestCase {
 		$this->assertStringContainsString( 'bundle', $warning->fix() );
 	}
 
+	public function test_a_compressed_dump_in_a_code_folder_is_a_bundled_archive_warning(): void {
+		$this->tree->file( 'wp-content/plugins/example/backups/site.sql.gz', 'x' );
+
+		$findings = $this->by_severity( $this->run_check() );
+
+		$this->assertArrayNotHasKey( 'critical', $findings );
+		$this->assertSame( 'wp-content/plugins/example/backups/site.sql.gz', $findings['warning']->evidence()['files'][0]['path'] );
+		$this->assertStringStartsWith( '1; ', (string) $findings['warning']->evidence()['archives_in_code_folders'] );
+	}
+
 	public function test_an_archive_outside_code_folders_has_no_bundling_note(): void {
 		$this->tree->file( 'site.zip' );
 

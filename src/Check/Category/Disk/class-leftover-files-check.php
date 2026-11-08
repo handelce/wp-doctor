@@ -87,8 +87,12 @@ final class Leftover_Files_Check implements Check {
 			$name    = strtolower( $entry->name() );
 			$in_code = $this->is_in_code( $entry->path(), $code );
 			if ( $this->is_database_dump( $name ) ) {
-				if ( ! $in_code || ( '.sql' === substr( $name, -4 ) && 1 === preg_match( self::DUMP_DATA, (string) $files->read( $entry->path(), self::DUMP_READ_BYTES ) ) ) ) {
+				$plain = '.sql' === substr( $name, -4 );
+				if ( ! $in_code || ( $plain && 1 === preg_match( self::DUMP_DATA, (string) $files->read( $entry->path(), self::DUMP_READ_BYTES ) ) ) ) {
 					$serious[] = $entry;
+				} elseif ( ! $plain ) {
+					$other[] = $entry;
+					++$bundled;
 				}
 			} elseif ( $this->is_config_copy( $name ) ) {
 				$serious[] = $entry;
