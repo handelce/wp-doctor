@@ -93,6 +93,15 @@ final class Context {
 	private $checksums_unavailable = 'Checksum lookups are not configured';
 
 	/**
+	 * Statements given with --queries. Null when none were given.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @var Supplied_Queries|null
+	 */
+	private $queries;
+
+	/**
 	 * Limits set by with_thresholds(). Null means the defaults apply.
 	 *
 	 * @since 0.1.0
@@ -214,6 +223,32 @@ final class Context {
 		$copy->thresholds = $thresholds;
 
 		return $copy;
+	}
+
+	/**
+	 * A copy of this context that carries the statements given with --queries.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @param Supplied_Queries $queries Statements from the file.
+	 * @return self
+	 */
+	public function with_queries( Supplied_Queries $queries ): self {
+		$copy          = clone $this;
+		$copy->queries = $queries;
+
+		return $copy;
+	}
+
+	/**
+	 * Statements given with --queries. Null when none were given.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @return Supplied_Queries|null
+	 */
+	public function queries(): ?Supplied_Queries {
+		return $this->queries;
 	}
 
 	/**

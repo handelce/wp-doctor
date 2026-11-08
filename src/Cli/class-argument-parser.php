@@ -23,7 +23,7 @@ use function WP_Doctor\esc_cli;
 final class Argument_Parser {
 
 	private const FLAGS         = array( 'offline', 'db-from-env', 'redact-emails', 'color', 'no-color', 'version', 'help' );
-	private const VALUE_OPTIONS = array( 'format', 'config', 'max-files', 'exclude' );
+	private const VALUE_OPTIONS = array( 'format', 'config', 'max-files', 'exclude', 'queries' );
 	private const FORMATS       = array( 'text', 'json', 'markdown' );
 
 	/**
@@ -38,13 +38,14 @@ final class Argument_Parser {
 	public function parse( array $args ): Cli_Options {
 		$asked = $this->information_asked_for( $args );
 		if ( null !== $asked ) {
-			return new Cli_Options( $asked, '', 'text', false, null, false, Cli_Options::DEFAULT_MAX_FILES, array(), false, null );
+			return new Cli_Options( $asked, '', 'text', false, null, false, Cli_Options::DEFAULT_MAX_FILES, array(), false, null, null );
 		}
 
 		$flags      = array();
 		$values     = array(
 			'format'    => 'text',
 			'config'    => null,
+			'queries'   => null,
 			'max-files' => (string) Cli_Options::DEFAULT_MAX_FILES,
 		);
 		$excludes   = array();
@@ -133,7 +134,8 @@ final class Argument_Parser {
 			(int) $values['max-files'],
 			$excludes,
 			isset( $flags['redact-emails'] ),
-			$colour
+			$colour,
+			null === $values['queries'] ? null : (string) $values['queries']
 		);
 	}
 

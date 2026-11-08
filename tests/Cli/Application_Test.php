@@ -644,6 +644,56 @@ final class Application_Test extends TestCase {
 		$this->assertNotEmpty( $this->config_paths_inside_the_site() );
 	}
 
+	public function test_statements_from_a_queries_file_outside_the_site_reach_the_checks(): void {
+		$this->tree = new Temp_Tree();
+		$path       = $this->tree->outside() . '/slow.sql';
+		file_put_contents( $path, "# slow queries\nSELECT 1;\n\nSELECT 2\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writes a test input outside any scanned site.
+		$given = null;
+
+		list( $code ) = $this->run_app(
+			array( 'scan', $this->fixture( 'plain' ), "--queries=$path" ),
+			$this->registry_of(
+				function ( Context $context ) use ( &$given ) {
+					$given = null === $context->queries() ? null : $context->queries()->all();
+					return Result::pass();
+				}
+			)
+		);
+
+		$this->assertSame( 0, $code );
+		$this->assertSame(
+			array(
+				2 => 'SELECT 1',
+				4 => 'SELECT 2',
+			),
+			$given
+		);
+	}
+
+	public function test_a_queries_file_inside_the_scanned_site_is_refused(): void {
+		$site = $this->fixture( 'with-config' );
+		$this->assertFileExists( $site . '/wp-doctor.json' );
+
+		list( $code, $out, $err ) = $this->run_app( array( 'scan', $site, '--queries=' . $site . '/wp-doctor.json' ) );
+
+		$this->assertSame( 3, $code );
+		$this->assertSame( '', $out );
+		$this->assertStringContainsString( 'inside the scanned site', $err );
+	}
+
+	public function test_a_missing_or_empty_queries_file_is_refused(): void {
+		$this->tree = new Temp_Tree();
+		$empty      = $this->tree->outside() . '/empty.sql';
+		file_put_contents( $empty, "# nothing\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writes a test input outside any scanned site.
+
+		list( $missing_code, , $missing_err ) = $this->run_app( array( 'scan', $this->fixture( 'plain' ), '--queries=' . $this->tree->outside() . '/none.sql' ) );
+		list( $empty_code, , $empty_err )     = $this->run_app( array( 'scan', $this->fixture( 'plain' ), "--queries=$empty" ) );
+
+		$this->assertSame( array( 3, 3 ), array( $missing_code, $empty_code ) );
+		$this->assertStringContainsString( 'cannot be read', $missing_err );
+		$this->assertStringContainsString( 'holds no statement', $empty_err );
+	}
+
 	public function test_a_config_file_linked_from_outside_into_the_site_is_refused(): void {
 		$this->tree = new Temp_Tree();
 		$this->tree->link( 'linked.json', $this->fixture( 'with-config' ) . '/wp-doctor.json' );

@@ -34,6 +34,7 @@ use WP_Doctor\Check\Category\Performance\Cron_Duplicates_Check;
 use WP_Doctor\Check\Category\Performance\Cron_Overdue_Check;
 use WP_Doctor\Check\Category\Performance\Object_Cache_Missing_Check;
 use WP_Doctor\Check\Category\Performance\Revisions_Count_Check;
+use WP_Doctor\Check\Category\Performance\Slow_Query_Index_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Bloat_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Engine_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
@@ -130,6 +131,7 @@ final class Check_Registry {
 			new Recent_Changes_Check(),
 			new Remote_Code_Check(),
 			new Revisions_Count_Check(),
+			new Slow_Query_Index_Check(),
 			new Tables_Bloat_Check(),
 			new Tables_Engine_Check(),
 			new Tables_Largest_Check(),

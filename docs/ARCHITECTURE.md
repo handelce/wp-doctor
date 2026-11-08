@@ -21,7 +21,7 @@ bin/wp-doctor                      entry point (thin: builds the Application, ru
 src/
   class-application.php            argument parsing, wiring, exit code
   Cli/
-    class-argument-parser.php      --format, --offline, --config, --db-from-env, --max-files, --exclude, --redact-emails, --color
+    class-argument-parser.php      --format, --offline, --config, --queries, --db-from-env, --max-files, --exclude, --redact-emails, --color
     class-tool-config.php          strict reader for wp-doctor.json; ids checked against the registry
     interface-console.php          stdout, stderr and TTY detection; the only place the tool writes
   Site/
@@ -366,6 +366,17 @@ Exit codes: `0` no findings above `info`, `1` warnings present, `2` critical
 findings present, `3` tool error: could not locate a site, bad arguments, or any
 check that ended in `error` (even when findings exist). Skipped checks do not
 change the code.
+
+## Supplied queries
+
+`--queries=FILE` names a text file of SQL statements for
+`perf.slowquery.indexcheck`, one per line. Blank lines and lines starting with
+`#` are passed over and a trailing semicolon is dropped; the file may hold up
+to 500 statements and 1 MiB. Like the config file, it must lie outside the
+scanned site, and a path inside it is refused with exit code 3. The
+statements reach the database only as `EXPLAIN <statement>` through the
+read-only gate, so anything other than a `SELECT` is refused there, and the
+report names a statement by its line number, never by its text.
 
 ## Configuration
 

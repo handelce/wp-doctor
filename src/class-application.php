@@ -13,6 +13,7 @@ namespace WP_Doctor;
 use WP_Doctor\Check\Check_Registry;
 use WP_Doctor\Check\Context;
 use WP_Doctor\Check\Runner;
+use WP_Doctor\Check\Supplied_Queries;
 use WP_Doctor\Check\Thresholds;
 use WP_Doctor\Cli\Argument_Parser;
 use WP_Doctor\Cli\Cli_Options;
@@ -67,8 +68,10 @@ Read-only: nothing is written to the site or its database.
 
 Options:
   --format=FORMAT      text, json or markdown (default: text)
-  --offline            Do not contact api.wordpress.org
+  --offline            Do not contact wordpress.org for checksums
   --config=FILE        Read settings from a wp-doctor.json file (a file inside the site is never read)
+  --queries=FILE       Check the SELECT statements in FILE, one per line, for joins
+                       that likely cannot use an index (a file inside the site is never read)
   --db-from-env        Take database credentials from WPD_DB_HOST, WPD_DB_NAME,
                        WPD_DB_USER and WPD_DB_PASSWORD instead of wp-config.php;
                        WPD_DB_TABLE_PREFIX, when set, replaces $table_prefix
@@ -238,6 +241,9 @@ TEXT;
 		if ( array() !== $tool_config->thresholds() ) {
 			$context = $context->with_thresholds( $this->thresholds_from( $tool_config ) );
 		}
+		if ( null !== $options->queries_path() ) {
+			$context = $context->with_queries( $this->load_queries( (string) $options->queries_path(), $site ) );
+		}
 
 		$entries = ( new Runner() )->run( $this->registry, $context );
 		$notices = array_merge( $this->config_notices( $tool_config, $excludes, $site ), $files->notices() );
@@ -314,6 +320,36 @@ TEXT;
 		}
 
 		return Tool_Config::from_json( $json, $path );
+	}
+
+	/**
+	 * Reads the file named by --queries. Like the config file, it must lie
+	 * outside the scanned site.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @param string $path Path given with --queries.
+	 * @param Site   $site Located site, which the file must lie outside.
+	 * @return Supplied_Queries
+	 * @throws Usage_Exception When the file is inside the site, cannot be read, or holds too many statements.
+	 */
+	private function load_queries( string $path, Site $site ): Supplied_Queries {
+		$resolved = real_path( $path );
+		if ( false === $resolved || is_dir( $resolved ) ) {
+			throw new Usage_Exception( esc_cli( "Queries file cannot be read: $path" ) );
+		}
+		if ( $this->is_inside( $resolved, $site->root() ) ) {
+			throw new Usage_Exception( esc_cli( "Queries file $path is inside the scanned site and is not read; pass a copy from outside the site" ) );
+		}
+		$text = @file_get_contents( $resolved, false, null, 0, Supplied_Queries::MAX_BYTES + 1 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- A local file read as text; failure is reported below.
+		if ( false === $text ) {
+			throw new Usage_Exception( esc_cli( "Queries file cannot be read: $path" ) );
+		}
+		try {
+			return Supplied_Queries::from_text( $text );
+		} catch ( \InvalidArgumentException $e ) {
+			throw new Usage_Exception( esc_cli( "Queries file $path: " . $e->getMessage() ) );
+		}
 	}
 
 	/**

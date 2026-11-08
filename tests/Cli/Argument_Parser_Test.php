@@ -28,6 +28,7 @@ final class Argument_Parser_Test extends TestCase {
 		$this->assertSame( 'text', $options->format() );
 		$this->assertFalse( $options->offline() );
 		$this->assertNull( $options->config_path() );
+		$this->assertNull( $options->queries_path() );
 		$this->assertFalse( $options->db_from_env() );
 		$this->assertSame( 200000, $options->max_files() );
 		$this->assertSame( array(), $options->excludes() );
@@ -41,6 +42,7 @@ final class Argument_Parser_Test extends TestCase {
 			'--format=json',
 			'--offline',
 			'--config=/tmp/wp-doctor.json',
+			'--queries=/tmp/slow.sql',
 			'--db-from-env',
 			'--max-files=500',
 			'--exclude=wp-content/cache/**',
@@ -54,6 +56,7 @@ final class Argument_Parser_Test extends TestCase {
 		$this->assertSame( 'json', $options->format() );
 		$this->assertTrue( $options->offline() );
 		$this->assertSame( '/tmp/wp-doctor.json', $options->config_path() );
+		$this->assertSame( '/tmp/slow.sql', $options->queries_path() );
 		$this->assertTrue( $options->db_from_env() );
 		$this->assertSame( 500, $options->max_files() );
 		$this->assertSame( array( 'wp-content/cache/**', '*.log' ), $options->excludes() );

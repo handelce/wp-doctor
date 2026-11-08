@@ -60,6 +60,17 @@ final class Cli_Options {
 	private $offline;
 
 	/**
+	 * Path given with --queries. Null when the option is absent.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @return string|null
+	 */
+	public function queries_path(): ?string {
+		return $this->queries_path;
+	}
+
+	/**
 	 * Path given with --config. Null when the option is absent.
 	 *
 	 * @since 0.1.0
@@ -105,6 +116,15 @@ final class Cli_Options {
 	private $redact_emails;
 
 	/**
+	 * Path given with --queries. Null when the option is absent.
+	 *
+	 * @since 0.3.0
+	 *
+	 * @var string|null
+	 */
+	private $queries_path;
+
+	/**
 	 * True for --color, false for --no-color, null to decide from the terminal.
 	 *
 	 * @since 0.1.0
@@ -128,6 +148,7 @@ final class Cli_Options {
 	 * @param string[]    $excludes      Globs given with --exclude.
 	 * @param bool        $redact_emails Mask email local parts.
 	 * @param bool|null   $colour        Forced colour, or null to decide from the terminal.
+	 * @param string|null $queries_path  Path given with --queries, or null.
 	 */
 	public function __construct(
 		string $command,
@@ -139,7 +160,8 @@ final class Cli_Options {
 		int $max_files,
 		array $excludes,
 		bool $redact_emails,
-		?bool $colour
+		?bool $colour,
+		?string $queries_path
 	) {
 		$this->command       = $command;
 		$this->path          = $path;
@@ -151,6 +173,7 @@ final class Cli_Options {
 		$this->excludes      = $excludes;
 		$this->redact_emails = $redact_emails;
 		$this->colour        = $colour;
+		$this->queries_path  = $queries_path;
 	}
 
 	/**

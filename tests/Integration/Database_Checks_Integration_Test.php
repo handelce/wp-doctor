@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use WP_Doctor\Check\Category\Config\Db_Version_Check;
 use WP_Doctor\Check\Category\Performance\Cron_Overdue_Check;
 use WP_Doctor\Check\Category\Performance\Revisions_Count_Check;
+use WP_Doctor\Check\Category\Performance\Slow_Query_Index_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Engine_Check;
 use WP_Doctor\Check\Category\Performance\Tables_Largest_Check;
 use WP_Doctor\Check\Category\Performance\Transients_Expired_Check;
@@ -16,6 +17,7 @@ use WP_Doctor\Check\Category\Security\Injected_Content_Check;
 use WP_Doctor\Check\Category\Security\Outdated_Updates_Check;
 use WP_Doctor\Check\Check;
 use WP_Doctor\Check\Context;
+use WP_Doctor\Check\Supplied_Queries;
 use WP_Doctor\Check\Thresholds;
 use WP_Doctor\Db\Read_Only_Connection;
 use WP_Doctor\Fs\File_Scanner;
@@ -164,6 +166,36 @@ final class Database_Checks_Integration_Test extends TestCase {
 		$this->assertArrayNotHasKey( 'post_2', $by['warning'] );
 		$this->assertSame( 1, $by['info']['posts_flagged'] );
 		$this->assertSame( 5, $by['info']['post_1'] );
+	}
+
+	public function test_joins_that_cannot_share_an_index_are_found_with_explain_on_the_server(): void {
+		$database = Test_Database::seeded( 'joins-mismatched.sql' );
+		try {
+			$site    = ( new Site_Locator( new Config_Parser() ) )->locate( dirname( __DIR__ ) . '/fixtures/sites/plain' );
+			$context = Context::with_database( $site, new File_Scanner( $site->root() ), new Read_Only_Connection( $database->driver() ) )->with_queries(
+				Supplied_Queries::from_text(
+					"SELECT o.id FROM wptest_orders o JOIN wptest_order_items i ON i.order_ref = o.ref\n"
+					. "SELECT r.id FROM wptest_order_items i LEFT JOIN wptest_legacy_refunds r ON r.order_ref = i.order_ref\n"
+					. "SELECT o.id FROM wptest_orders AS o, wptest_order_items AS i WHERE o.id = i.order_id\n"
+					. "SELECT n.id FROM wptest_orders o INNER JOIN wptest_order_notes n ON n.order_ref = o.ref\n"
+					. "DELETE FROM wptest_orders\n"
+					. 'SELECT FROM WHERE'
+				)
+			);
+			$result  = ( new Slow_Query_Index_Check() )->run( $context );
+		} finally {
+			$database->drop();
+		}
+
+		$evidence = $result->finding_list()[0]->evidence();
+		$lines    = array();
+		for ( $rank = 1; isset( $evidence[ "join_{$rank}_line" ] ); $rank++ ) {
+			$lines[] = $evidence[ "join_{$rank}_line" ];
+		}
+		$this->assertSame( array( 1, 2, 3 ), $lines );
+		$this->assertSame( 4, $evidence['statements_examined'] );
+		$this->assertStringContainsString( 'line 5: refused by the read-only gate', $evidence['not_examined'] );
+		$this->assertStringContainsString( 'line 6: EXPLAIN failed', $evidence['not_examined'] );
 	}
 
 	public function test_administrators_are_found_through_the_prefixed_capabilities_key_and_judged_with_the_bundled_indicators(): void {

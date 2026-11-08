@@ -21,9 +21,16 @@ minor release may change the command-line options or the JSON report shape.
 - `sec.content.injected`: published posts holding a script from another host
   or an inline script that hides what it does (warning), and posts changed in
   the last 30 days that hold defacement text such as "hacked by" (info).
+- `--queries=FILE` and `perf.slowquery.indexcheck` (warning): give a file of
+  slow `SELECT` statements, one per line, and wp-doctor runs `EXPLAIN` on each
+  and reports joins between columns whose types or character sets differ, so
+  the server reads a table in full or refuses the statement. The file must lie
+  outside the site, and the report names statements only by line number.
 
 ### Changed
 
+- `--offline` now reads "Do not contact wordpress.org for checksums" in the
+  help, since plugin checksums come from downloads.wordpress.org.
 - The phar build is reproducible: building a release tag gives the same bytes
   as the published phar, so its checksum can be checked against the source.
   The README says how. The Release workflow builds each release twice and
