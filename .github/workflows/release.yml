@@ -32,10 +32,10 @@ jobs:
             exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: tooling
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ steps.tag.outputs.tag }}
           path: source
@@ -51,7 +51,7 @@ jobs:
         run: |
           php -d phar.readonly=0 tooling/tools/build-phar.php --source=source --output=dist/wp-doctor.phar --expect-version="${TAG#v}"
           cd dist && sha256sum wp-doctor.phar > wp-doctor.phar.sha256
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: phar
           path: dist/
@@ -66,10 +66,10 @@ jobs:
       matrix:
         php-version: ["7.2", "8.4"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ needs.build.outputs.tag }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: phar
           path: dist
@@ -98,8 +98,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: phar
           path: dist
